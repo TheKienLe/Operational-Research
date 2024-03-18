@@ -126,6 +126,8 @@ class MIP_model():
         
 
         # ct3: the next operation can only be started after the previous one is completed
+        # Consider eliminate L
+        # Add condition h > k
         for i in self.N:
             for h in self.lambda_dict[i]:
                 for k in self.lambda_dict[i]:
@@ -145,6 +147,7 @@ class MIP_model():
                         "ct4")
         
         # ct5: 
+        # Change from -L to +L
         for i in self.N:
             for l in self.N:
                 if i != l:
@@ -176,9 +179,9 @@ class MIP_model():
         if status == pywraplp.Solver.OPTIMAL or status == pywraplp.Solver.FEASIBLE:
             print(f"Total makespan = {self.solver.Objective().Value()}\n")
 
-            # for i in self.N:
-            #     for k in self.lambda_dict[i]:
-            #         print("s =", self.s[(i, k)].solution_value())
+            for i in self.N:
+                for k in self.lambda_dict[i]:
+                    print(f"s{i,k} =", self.s[(i, k)].solution_value() + self.p[i,k])
 
             # for i in self.N:
             #     for f in self.F:
