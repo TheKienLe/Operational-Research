@@ -1,5 +1,4 @@
 from ortools.sat.python import cp_model
-import numpy as np
 
 
 def flow_shop(all_jobs, all_stages, all_factories):
