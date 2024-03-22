@@ -43,6 +43,7 @@ def MIP_model():
     # [job, operation, machine, value]
     a = lst_to_dict(np.array(pd.read_excel(
         "data.xlsx", "process_machine_matrix")))
+    print(a)
 
     # transportation time from customer i to customer j by vehicle v
     t = _2d_lst_to_dict(
@@ -95,8 +96,9 @@ def MIP_model():
     for i in N:
         for f in R:
             for j in N:
-                for m in M:
-                    Y[(i, f, j, m)] = solver.BoolVar("")
+                for r in R:
+                    for m in M:
+                        Y[(i, f, j, r, m)] = solver.BoolVar("")
 
     # distribution
     # deliver time of order (job) j
@@ -137,6 +139,64 @@ def MIP_model():
     W = []
     for v in V:
         W.append(solver.BoolVar(""))
+
+    # constraint
+    # 3
+    total1 = 0
+    for j in N:
+        for r in R:
+            for m in M:
+                total1 += X[(j, r, m)]
+    solver.Add(total1 == 1, "ct1")
+
+    # 4
+    for j in N:
+        for r in R:
+            for m in M:
+                solver.Add(X[(j, r, m)] <= a[(j, r, m)], "ct2")
+    # 5
+    total2 = 0
+    for j in N:
+        for r in R:
+            for i in N:
+                for f in R:
+                    for m in M:
+                        total2 += Y[(i, f, j, r, m)]
+    solver.Add(X[(j, r, m)] == total2, "ct3")
+
+    # 6
+    total3 = 0
+    for i in N:
+        for f in R:
+            for j in N:
+                for r in R:
+                    for m in M:
+                        total3 += Y[(i, f, j, r, m)]
+    solver.Add(X[(i, r, m)] == total3, "ct4")
+
+    # missing constraint 5
+
+    # 8
+    total4 = 0
+    for m in M:
+        for j in N:
+            for r in R:
+                total4 = p[(j, r, m)] * X[(j, r, m)]
+    solver.Add(gamma[(j, r)] == pi[(j, r)] + total4, "ct6")
+
+    # 9
+    for j in range(0, n-1):
+        for r in R:
+            solver.Add(C[j] == gamma[(j, r)], "ct7")
+
+    # 10
+    total5 = 0
+    for j in N:
+        for f in R:
+            for r in range(1, r+1):
+                for m in M:
+                    total5 += Y[(0, f, j, r, m)]
+                    solver.Add(total5 == 1)
 
 
 def lst_to_dict(lst):
