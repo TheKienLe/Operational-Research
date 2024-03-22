@@ -174,7 +174,7 @@ def MIP_model():
                         total3 += Y[(i, f, j, r, m)]
     solver.Add(X[(i, r, m)] == total3, "ct4")
 
-    # missing constraint 5
+    # missing constraint #7
 
     # 8
     total4 = 0
@@ -197,6 +197,15 @@ def MIP_model():
                 for m in M:
                     total5 += Y[(0, f, j, r, m)]
                     solver.Add(total5 == 1)
+
+    # 11
+    total6 = 0
+    for i in N:
+        for f in R:
+            for r in R:
+                for m in M:
+                    total6 += Y[(i, f, r, r, m)]
+    solver.Add(total6 == 1)
 
 
 def lst_to_dict(lst):
