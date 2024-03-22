@@ -1,5 +1,4 @@
 from ortools.linear_solver import pywraplp
-import collections
 import pandas as pd
 import numpy as np
 
@@ -87,7 +86,8 @@ class MIP_model():
         for i in self.N:
             for h in self.lambda_dict[i]:
                 for k in self.lambda_dict[i]:
-                   self.W[(i, h, k)] = self.solver.IntVar(0, 1, "") 
+                #    if h!=k:
+                       self.W[(i, h, k)] = self.solver.IntVar(0, 1, "") 
 
 
 
@@ -115,6 +115,7 @@ class MIP_model():
                 self.solver.Sum(
                     [self.Y[(i, f)] for f in self.F]) == 1, 
                     "ct1")
+            
 
         # ct2: Each job pass all stages and processed by one machine
         for i in self.N:
@@ -125,14 +126,28 @@ class MIP_model():
                         "ct2")
         
 
+        # ct3_sub:
+        for i in self.N:
+            for index, k in enumerate(self.lambda_dict[i][:-1]):
+                for h in self.lambda_dict[i]:
+                    if h == self.lambda_dict[i][index+1]:
+                        self.solver.Add(
+                            self.W[(i, k, h)] == 1,
+                            "ct3_sub")
+                    else:
+                        self.solver.Add(
+                            self.W[(i, k, h)] == 0,
+                            "ct3_sub")
+                        
+        
         # ct3: the next operation can only be started after the previous one is completed
         # Consider eliminate L
         # Add condition h > k
         for i in self.N:
-            for h in self.lambda_dict[i]:
-                for k in self.lambda_dict[i]:
+            for index, k in enumerate(self.lambda_dict[i][:-1]):
+                for h in self.lambda_dict[i]:
                     for j in self.E_dict[k]:
-                        if h>k:
+                        if h == self.lambda_dict[i][index+1]:
                             self.solver.Add(
                                 self.s[(i,h)] - (self.s[(i,k)] + self.p[i, k]) - self.L*(1 - self.W[(i, k, h)]) >=0,
                                 "ct3")
@@ -145,8 +160,11 @@ class MIP_model():
                         self.solver.Add(
                             self.Z[(l,i,k)] + self.Z[(i,l,k)] <= 1,
                         "ct4")
+                        self.solver.Add(
+                            self.Z[(l,i,k)] + self.Z[(i,l,k)] >= 1,
+                        "ct4_sub")
         
-        # ct5: 
+        # ct5: thời gian bắt đầu của job sau sẽ lớn thời gian kết thúc job trước
         # Change from -L to +L
         for i in self.N:
             for l in self.N:
@@ -158,13 +176,14 @@ class MIP_model():
                                     self.s[(l,k)] - (self.s[(i,k)] + self.p[i, k]) \
                                         + self.L*(5 - self.Z[(l,i,k)] - self.X[(i,j,k)] 
                                                   - self.X[(l,j,k)] - self.Y[(i,f)] - self.Y[(l,f)]) >=0,
+                                        # + self.L*(1 - self.Z[(l,i,k)]) >=0,
                         "ct5")
 
-        # ct6:
+        # ct6: 
         self.f = self.solver.NumVar(0, self.solver.infinity(), "")
         for i in self.N:
             for k in self.lambda_dict[i]:
-                self.solver.Add(self.f >= self.s[(i, k)] + self.p[i, k])
+                self.solver.Add(self.f >= (self.s[(i, k)] + self.p[i, k]))
 
 
         # Objective
@@ -181,16 +200,30 @@ class MIP_model():
 
             for i in self.N:
                 for k in self.lambda_dict[i]:
-                    print(f"s{i,k} =", self.s[(i, k)].solution_value() + self.p[i,k])
+                        print(f"s{i,k} =", self.s[(i, k)].solution_value() )
+                        # print(f"p{i,k} =", self.p[i, k])
 
-            # for i in self.N:
-            #     for f in self.F:
-            #         print("y =", self.Y[(i, f)].solution_value())
+            for i in self.N:
+                for f in self.F:
+                    if f ==1:
+                        print(f"y{i,f} =", self.Y[(i, f)].solution_value())
 
             # for i in self.N:
             #     for k in self.lambda_dict[i]:
             #         for j in self.E_dict[k]:
             #             print(f"x{i,j,k} =", self.X[(i,j,k)].solution_value())
+                        
+            # for i in self.N:
+            #     for k in self.lambda_dict[i]:
+            #         for h in self.lambda_dict[i]:
+            #             if self.W[(i,k,h)].solution_value() == 1:
+            #                 print(f"w{i,k,h} =", self.W[(i,k,h)].solution_value())
+                            
+            # for i in self.N:
+            #     for l in self.N:
+            #         for k in self.intersect(self.lambda_dict[i], self.lambda_dict[l]):
+            #             print(f"Z{i,l,k} =", self.Z[(i,l,k)].solution_value())
+
             # 
             # print("y =", self.Y.solution_value())
         else:
