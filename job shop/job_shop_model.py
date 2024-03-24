@@ -211,9 +211,7 @@ def MIP_model(data_address=r"job shop/data.xlsx"):
                         solver.Add(bc7[(i, f, m)] <= gamma[(i,f)] + bigM*(1-Y[(i, f, j, r, m)]))
                         solver.Add(bc7[(i, f, m)] >= gamma[(i,f)] - bigM*(1-Y[(i, f, j, r, m)]))
 
-            solver.Add(pi[(j, r)] >= solver.Sum([bc7[(i, f, m)] for i in N for f in R for m in M]))
-            # solver.Add(pi[(j, r)] <= solver.Sum([bc7[(i, f, m)] for i in N for f in R for m in M]) + bigM*z7[(j, r, 1)])
-            # solver.Add(solver.Sum([z7[(j, r, i)] for i in range(2)]) <= 1)
+    # missing constraint 5
 
     # 8
     for j in N:
@@ -374,6 +372,15 @@ def MIP_model(data_address=r"job shop/data.xlsx"):
         # print("y =", self.Y.solution_value())
     else:
         print("No solution found.")
+
+    # 11
+    total6 = 0
+    for i in N:
+        for f in R:
+            for r in R:
+                for m in M:
+                    total6 += Y[(i, f, r, r, m)]
+    solver.Add(total6 == 1)
 
 
 def lst_to_dict(lst):
