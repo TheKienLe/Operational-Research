@@ -210,6 +210,7 @@ def MIP_model(data_address=r"job shop/data.xlsx"):
                         solver.Add(bc7[(i, f, m)] <= bigM * Y[(i, f, j, r, m)])
                         solver.Add(bc7[(i, f, m)] <= gamma[(i,f)] + bigM*(1-Y[(i, f, j, r, m)]))
                         solver.Add(bc7[(i, f, m)] >= gamma[(i,f)] - bigM*(1-Y[(i, f, j, r, m)]))
+            solver.Add(pi[(j, r)] >= solver.Sum([bc7[(i, f, m)] for i in N for f in R for m in M]))
 
     # missing constraint 5
 
@@ -283,10 +284,11 @@ def MIP_model(data_address=r"job shop/data.xlsx"):
             solver.Add(bc17[(j,v)] <= bigM * Z[(j, v)])
             solver.Add(bc17[(j,v)] <= C[j-1] + bigM *(1 - Z[j, v]))
             solver.Add(bc17[(j,v)] >= C[j-1] - bigM *(1 - Z[j, v]))
+
             solver.Add(S[v-1] >= bc17[(j,v)])
             solver.Add(S[v-1] <= bc17[(j,v)] + bigM*z17[(v, j)])
 
-        solver.Add(solver.Sum([z17[(v, j)] for j in N]) <= len(N) - 1)
+        solver.Add(solver.Sum([z17[(v, j)] for j in N]) <= n - 1)
         
     # 18 Linearize binary * continuous
     bc18 = {}
@@ -306,7 +308,7 @@ def MIP_model(data_address=r"job shop/data.xlsx"):
                     [bc18[(i,j,v)] for i in N]), "ct18")
 
     # 19 Linearize binary * continuous
-    bc19 = {}
+    bc19 = {} # dummy variable
     for j in N:
         for v in V:
             bc19[(j,v)] = solver.NumVar(0, bigM, "")
