@@ -36,21 +36,13 @@ def vrp_model():
     y = np.array(pd.read_excel("data.xlsx", "coor"))[:, 2]
 
     d = dict()
-    for i in NC:
-        for j in NC:
+    for i in N:
+        for j in N:
             if i == j:
                 d[(i, j)] = 0
             else:
                 d[(i, j)] = float(
                     round(math.sqrt((x[i-1] - x[j-1])**2 + (y[i-1] - y[j-1])**2), 2))
-
-    # add distance from root node (0) to other destination
-    root_node = [10, 10, 20, 30, 20, 10, 5]
-    for i in NC:
-        d[(0, i)] = root_node[i-1]
-        d[(i, 0)] = root_node[i-1]
-
-    d[(0, 0)] = 0
 
     Q = dict()
     q_temp = np.transpose(
@@ -71,7 +63,7 @@ def vrp_model():
                 x[(i, j, k)] = solver.BoolVar("")
 
     z = dict()
-    for i in NC:
+    for i in N:
         for k in K:
             for p in P:
                 z[(i, k, p)] = solver.BoolVar("")
@@ -92,18 +84,22 @@ def vrp_model():
     for i in NC:
         solver.Add(solver.Sum([y[(i, k)] for k in K]) == 1, "ct2")
 
+    # ct3
     solver.Add(solver.Sum([y[(0, k)] for k in K]) <= k, "ct3")
 
+    # ct4
     for j in NC:
         for k in K:
             solver.Add(solver.Sum([x[(i, j, k)]
                        for i in N if i != j]) == y[(i, k)], "ct4")
 
+    # ct5
     for i in NC:
         for k in K:
             solver.Add(solver.Sum(x[(i, j, k)]
-                       for j in N if i != j) == y[i, k], "ct5")
+                       for j in N if i != j) == y[(i, k)], "ct5")
 
+    # ct6
     bc6 = dict()
     for i in NC:
         for j in NC:
@@ -137,16 +133,19 @@ def vrp_model():
             for k in K:
                 solver.Add(u[(i, k, p)] <= Q[p], "ct7b")
 
+    # ct8
     for j in NC:
         for k in K:
             for p in P:
                 solver.Add(z[(j, k, p)] <= solver.Sum(
                     [x[(i, j, k)] for i in N]), "ct8")
 
+    # ct9
     for j in NC:
         for p in P:
             solver.Add(solver.Sum([z[(j, k, p)] for k in K]) == 1, "ct9")
 
+    # ct10
     bc10 = dict()
     for k in K:
         for p in P:
@@ -168,17 +167,17 @@ def vrp_model():
 
     # objective function
     bcf = {}
-    for i in N:
-        for j in N:
-            for k in K:
+    for k in K:
+        for i in N:
+            for j in N:
                 bcf[(i, j, k)] = solver.IntVar(0, bigM, "")
 
-    for i in N:
-        for j in N:
-            for k in K:
+    for k in K:
+        for i in N:
+            for j in N:
                 solver.Add(bcf[(i, j, k)] <= bigM * x[(i, j, k)])
-                solver.Add(bcf[(i, j, k)] >= d[(i, j)] + bigM * x[(i, j, k)])
-                solver.Add(bcf[(i, j, k)] <= d[(i, j)] - bigM * x[(i, j, k)])
+                solver.Add(bcf[(i, j, k)] <= d[(i, j)] + bigM * x[(i, j, k)])
+                solver.Add(bcf[(i, j, k)] >= d[(i, j)] - bigM * x[(i, j, k)])
 
     solver.Minimize(solver.Sum([bcf[(i, j, k)]
                     for i in N for j in N for k in K]))
