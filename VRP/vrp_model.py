@@ -74,10 +74,10 @@ def vrp_model():
             y[(i, k)] = solver.BoolVar("")
 
     u = dict()
-    for i in N:
+    for i in NC:
         for k in K:
             for p in P:
-                u[(i, k, p)] = solver.BoolVar("")
+                u[(i, k, p)] = solver.IntVar(0, bigM, "")
 
     # constraints
     # ct2
