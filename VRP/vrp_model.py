@@ -20,7 +20,6 @@ def vrp_model():
     bigM = 1e10
 
     # parameters
-
     def lst_to_dict(lst):
         q = dict()
         for i in NC:
@@ -79,6 +78,7 @@ def vrp_model():
         for k in K:
             for p in P:
                 u[(i, k, p)] = solver.IntVar(0, bigM, "")
+                
 
     # constraints
     # ct2

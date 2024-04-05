@@ -1,5 +1,4 @@
 from ortools.linear_solver import pywraplp
-import collections
 import pandas as pd
 import numpy as np
 
@@ -179,9 +178,9 @@ class MIP_model():
         if status == pywraplp.Solver.OPTIMAL or status == pywraplp.Solver.FEASIBLE:
             print(f"Total makespan = {self.solver.Objective().Value()}\n")
 
-            for i in self.N:
-                for k in self.lambda_dict[i]:
-                    print(f"s{i,k} =", self.s[(i, k)].solution_value() + self.p[i,k])
+            # for i in self.N:
+            #     for k in self.lambda_dict[i]:
+            #         print(f"s{i,k} =", self.s[(i, k)].solution_value() + self.p[i,k])
 
             # for i in self.N:
             #     for f in self.F:
