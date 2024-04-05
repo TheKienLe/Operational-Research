@@ -1,75 +1,133 @@
 import pandas as pd
 import numpy as np
 import random
+import math
 
 
 class GA:
-    def __init__(self, chromosome, truck_cap, num_fac, factory_qty) -> None:
-        # initial solution: represent by a list
-        self.chromosome = chromosome
-        # truck capacity for each compartment: truck_cap = [compart_1, compart_2]
-        self.truck_cap = truck_cap
-        # number of factory
-        self.factory = num_fac
-        # factory quantity for each compartment: factory_qty = {factory : [compart_1, compart_2]}
-        self.factory_qty = factory_qty
+    def __init__(self, instance, GA_params) -> None:
+        
+        ## Instane Parameters
+        # number of hospital
+        self.num_hospital = instance["num_hospital"] 
 
-    def shuffle(self, genes):
-        random.shuffle(genes)
-        return genes
+        # number of vehicle
+        self.num_vehicle =  instance["num_vehicle"]
 
-    def initialize_population(self, genes, population_size=50):
+        # number of compartments  
+        self.num_compart = instance["num_compart"] 
+
+        # hospital quantity for each compartment: hospital_qty = [compart_1 compart_2]
+        self.hospital_qty = instance["hospital_qty"]
+
+        # vehicle capacity for each compartment: vehicle_cap = [compart_1, compart_2]
+        self.vehicle_cap = instance["vehicle_cap"]
+
+        # Travel distance between hospital_i and hospital_j
+        self.travel_dist = instance["travel_dist"]
+
+        ## GA parameters
+        self.pop_size = GA_params["pop_size"] # population size
+        self.gen_max = GA_params["gen_max"] # Max number of generation
+        self.mutate_prob = GA_params["mutate_prob"] # Probability of mutation
+        self.cross_rate = GA_params["cross_rate"] # percentage of route being crossovered 
+
+        ## Initial population
+        self.population = self.initialize_population(self.pop_size)
+
+        ## Best individual (update after finishing fitness_score function)
+        
+
+    def initialize_population(self, population_size=50):
         # population
-        data = {"population": []}
+        ind0 = np.arange(1, self.num_hospital+1)
+        population = []
 
         for _ in range(population_size):
-            temp_genes = self.shuffle(genes)
-            result = [0]
-            current_id = 0  # first factory
-            self.num_truck = 0
+            temp_genes = np.random.permutation(ind0) # shuffle to create new route
+            final_genes = [0] # initialize new route
+            current_cap = np.array([0]*self.num_compart, dtype=np.float32) # initialize current cap
 
-            while temp_genes[-1] not in result:
-                temp_cap = [0, 0]  # initial capacity of truck
-                for id in range(current_id, self.factory):
-                    # update qty of compart type 1
-                    temp_cap[0] += self.factory_qty[temp_genes[id]][0]
-                    # update qty of compart type 2
-                    temp_cap[1] += self.factory_qty[temp_genes[id]][1]
-                    if temp_cap[0] > self.truck_cap[0] or\
-                            temp_cap[1] > self.truck_cap[1]:
-                        result.append(0)
-                        current_id = id
-                        self.num_truck += 1
-                        break
-                    else:
-                        result.append(temp_genes[id])
-            if result not in data["population"]:
-                data["population"].append(result)
+            for host in temp_genes:
+                # update current capacity
+                current_cap += self.hospital_qty[host]
 
-        df = pd.DataFrame(data)
+                # Check current capacity
+                if (current_cap <= self.vehicle_cap).all():
+                    final_genes.append(host) # add new hospital to current vehicle
+                else:
+                    final_genes.extend([0, host]) # assign to the next truck
+                    current_cap = self.hospital_qty[host].copy() # update current capacity
 
-        return df
+            final_genes.append(0) # return to collection center
+            population.append(final_genes) # add new individual to the truck
+                
+        return population
+
+def read_data(url):
+    df = pd.read_excel(url, "parameters")
+    n = int(df.iloc[0, 1])
+    nc = int(df.iloc[1, 1])
+    k = int(df.iloc[2, 1])
+    p = int(df.iloc[3, 1])
+
+    N = range(n+1)            # root node 
+    NC = range(1, nc+1)       # destination node 
+    K = range(1, k+1)       # set of vehicle 
+    P = range(1, p+1)       # set of compartment
+
+    # parameters
+
+    # quantity of type p at hospital i
+    q = np.array(pd.read_excel("data.xlsx", "coor").iloc[:, [3, 4],], dtype=np.float32)
+
+    # distance
+    x = np.array(pd.read_excel("data.xlsx", "coor"))[:, 1]
+    y = np.array(pd.read_excel("data.xlsx", "coor"))[:, 2]
+
+    d = dict()
+    for i in N:
+        for j in N:
+            if i == j:
+                d[(i, j)] = 0 # lol :))
+            else:
+                d[(i, j)] = float(
+                    round(math.sqrt((x[i-1] - x[j-1])**2 + (y[i-1] - y[j-1])**2), 2))
+
+    # Capacity
+    Q = np.transpose(
+        np.delete(
+            np.array(pd.read_excel("data.xlsx", "capacity"), dtype= np.float32), 0, 1))
+    Q = Q.squeeze()
+
+    instance = {}
+    instance["num_hospital"] = n-1
+    instance["num_vehicle"] = k 
+    instance["num_compart"] = p 
+    instance["hospital_qty"] = q
+    instance["vehicle_cap"] = Q
+    instance["travel_dist"] = d
+    
+    return instance
+
+if __name__ == "__main__":
+
+    GA_params = {
+        "pop_size": 100,
+        "gen_max": 50,
+        "mutate_prob": 0.1,
+        "cross_rate": 0.5,
+    }
+
+    instance = read_data("data.xlsx")
+
+    ga = GA(instance, GA_params)
+    print(ga.population[:3])
 
     def fittest_score(self):
         pass
 
 
-chromosome = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-truck_cap = np.transpose(
-    np.delete(np.array(pd.read_excel("data.xlsx", "capacity")), 0, 1))[0]
-num_fac = 10
 
 
-def lst_to_dict(lst):
-    q = dict()
-    for i in range(num_fac):
-        q[i+1] = lst[i]
-    return q
 
-
-factory_qty = np.array(pd.read_excel("data.xlsx", "test"))[:, [1, 2]]
-factory_qty = lst_to_dict(factory_qty)
-print(factory_qty)
-
-ga = GA(chromosome, truck_cap, num_fac, factory_qty)
-print(ga.initialize_population(chromosome))

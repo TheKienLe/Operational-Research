@@ -351,7 +351,7 @@ def MIP_model(data_address=r"job shop/data.xlsx"):
     # Print solution.
     
     if status == pywraplp.Solver.OPTIMAL or status == pywraplp.Solver.FEASIBLE:
-        print(f"Total makespan = {solver.Objective().Value()}\n")
+        print(f"Total cost = {solver.Objective().Value()}\n")
 
         for j in N:
             print(f"C{j} =", C[j-1].solution_value())
@@ -401,4 +401,5 @@ def _2d_lst_to_dict(lst, V):
     return mydict
 
 if __name__ == "__main__":
-    MIP_model()
+    MIP_model("data.xlsx")
+
