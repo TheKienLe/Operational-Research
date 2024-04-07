@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import random
 import math
-
+from utils import *
 
 class GA:
     def __init__(self, instance, GA_params) -> None:
@@ -33,17 +33,18 @@ class GA:
         # percentage of route being crossovered
         self.cross_rate = GA_params["cross_rate"]
 
-        # Initial population
+        # Initial population {index = [chromosome, fitness_score]}
         self.population = self.initialize_population(self.pop_size)
 
         # Best individual (update after finishing fitness_score function)
+        self.best_indi = self.find_best_indi(self.population)
 
     def initialize_population(self, population_size=50):
         # population
         ind0 = np.arange(1, self.num_hospital+1)
-        population = []
+        population = {}
 
-        for _ in range(population_size):
+        for indi in range(population_size):
             temp_genes = np.random.permutation(
                 ind0)  # shuffle to create new route
             final_genes = [0]  # initialize new route
@@ -59,41 +60,39 @@ class GA:
                     # add new hospital to current vehicle
                     final_genes.append(host)
                 else:
-                    final_genes.extend([0, host])  # assign to the next truck
+                    # assign to the next truck
+                    final_genes.extend([0, host])  
                     # update current capacity
                     current_cap = self.hospital_qty[host].copy()
 
             final_genes.append(0)  # return to collection center
-            population.append(final_genes)  # add new individual to the truck
 
-        def lst_to_dict(lst):
-            q = dict()
-            for id in range(len(lst)):
-                q[id+1] = lst[id]
-            return q
+            # add new individual to the truck
+            population[indi]= [final_genes, self.fittest_score(final_genes)]  
 
-        return lst_to_dict(population)
+        return population
 
-    def fittest_score(self, population, distance):
-        result = dict()
-        dict_value = list(population.values())
-        for index in range(len(dict_value)):
-            total_distance = 0
-            for node_index in range(len(dict_value[index])):
-                d1 = dict_value[index][node_index]
-                d2 = dict_value[index][node_index+1]
-                total_distance += distance[(d1, d2)]
-                if node_index == len(dict_value[index]) - 2:
-                    break
-            result[index + 1] = [dict_value[index], total_distance]
-        return result
+    def fittest_score(self, individual):
 
-    def minimize(self, fittest_score):
-        values = [value[1] for value in fittest_score.values()]
-        min_value = min(values)
-        index = values.index(min_value)
-        self.best_ind = index + 1
-        return self.best_ind
+        total_distance = 0
+        for node_index in range(len(individual) - 1):
+            d1 = individual[node_index]
+            d2 = individual[node_index+1]
+            total_distance += self.travel_dist[(d1, d2)]
+
+        return total_distance
+
+    def find_best_indi(self, population):
+
+        values_arr = np.array([value[1] for value in population.values()])
+        best_indi_index = np.argmin(values_arr) 
+
+        return population[best_indi_index]
+
+    def tournament_selection(self):
+        pass
+        
+
 
         # lst1 = [0, 7, 5, 0, 1, 4, 3, 0, 2, 0, 6, 0]
         # lst2 = [0, 7, 4, 1, 0, 3, 0, 2, 0, 6, 5, 0]
@@ -134,8 +133,8 @@ def read_data(url):
     y = np.array(pd.read_excel("data.xlsx", "coor"))[:, 2]
 
     d = dict()
-    for i in N:
-        for j in N:
+    for i in range(0, n):
+        for j in range(0, n):
             if i == j:
                 d[(i, j)] = 0
             else:
@@ -172,9 +171,12 @@ if __name__ == "__main__":
 
     ga = GA(instance, GA_params)
     # print(ga.population[:3])
-    population = ga.population
-    distance = ga.travel_dist
-    fittest_score = ga.fittest_score(population, distance)
-    print(fittest_score)
-    print(ga.minimize(fittest_score))
-    print(ga.best_ind)
+    # population = ga.population
+    # distance = ga.travel_dist
+    # fittest_score = ga.fittest_score(population, distance)
+    # print(fittest_score)
+    # print(ga.minimize(fittest_score))
+    # print(ga.best_ind)
+
+    print(ga.best_indi)
+    print(ga.travel_dist)
