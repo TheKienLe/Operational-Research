@@ -4,6 +4,7 @@ import random
 import math
 from utils import *
 
+
 class GA:
     def __init__(self, instance, GA_params) -> None:
 
@@ -61,14 +62,14 @@ class GA:
                     final_genes.append(host)
                 else:
                     # assign to the next truck
-                    final_genes.extend([0, host])  
+                    final_genes.extend([0, host])
                     # update current capacity
                     current_cap = self.hospital_qty[host].copy()
 
             final_genes.append(0)  # return to collection center
 
             # add new individual to the truck
-            population[indi]= [final_genes, self.fittest_score(final_genes)]  
+            population[indi] = [final_genes, self.fittest_score(final_genes)]
 
         return population
 
@@ -85,29 +86,20 @@ class GA:
     def find_best_indi(self, population):
 
         values_arr = np.array([value[1] for value in population.values()])
-        best_indi_index = np.argmin(values_arr) 
+        best_indi_index = np.argmin(values_arr)
 
         return population[best_indi_index]
 
-    def tournament_selection(self):
-        pass
-        
-
-
-        # lst1 = [0, 7, 5, 0, 1, 4, 3, 0, 2, 0, 6, 0]
-        # lst2 = [0, 7, 4, 1, 0, 3, 0, 2, 0, 6, 5, 0]
-        # distance1 = 0
-        # distance2 = 0
-        # for i in range(len(lst1)):
-        #     distance1 += distance[(lst1[i], lst1[i+1])]
-        #     if i == len(lst1) - 2:
-        #         break
-
-        # for i in range(len(lst2)):
-        #     distance2 += distance[(lst2[i], lst2[i+1])]
-        #     if i == len(lst2) - 2:
-        #         break
-        # print(distance1, distance2)
+    def tournament_selection(self, population, tournament_size, parent_pool_size):
+        parent_pool = []
+        for _ in range(parent_pool_size):
+            tournament_sample = random.choices(population, k=tournament_size)
+            best_ind_tournament = self.find_best_indi(
+                lst_to_dict(tournament_sample))
+            population_id = [
+                idx for idx in population if population[idx] == best_ind_tournament][0]
+            parent_pool.append(population_id)
+        return parent_pool
 
 
 def read_data(url):
@@ -177,6 +169,8 @@ if __name__ == "__main__":
     # print(fittest_score)
     # print(ga.minimize(fittest_score))
     # print(ga.best_ind)
-
+    print(ga.population)
     print(ga.best_indi)
-    print(ga.travel_dist)
+    result = ga.tournament_selection(population=ga.population,
+                                     tournament_size=10, parent_pool_size=100)
+    print(len(result))
