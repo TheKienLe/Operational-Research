@@ -173,4 +173,4 @@ if __name__ == "__main__":
     print(ga.best_indi)
     result = ga.tournament_selection(population=ga.population,
                                      tournament_size=10, parent_pool_size=100)
-    print(len(result))
+    print(result)
