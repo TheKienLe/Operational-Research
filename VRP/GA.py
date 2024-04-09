@@ -93,11 +93,15 @@ class GA:
     def tournament_selection(self, population, tournament_size, parent_pool_size):
         parent_pool = []
         for _ in range(parent_pool_size):
+            # create tournament sample
             tournament_sample = random.choices(population, k=tournament_size)
+            # find the best individual in tournament sample --> return individual [[route], fitness_score]
             best_ind_tournament = self.find_best_indi(
                 lst_to_dict(tournament_sample))
+            # find the index of best individual in tournament sample inside population
             population_id = [
                 idx for idx in population if population[idx] == best_ind_tournament][0]
+            # add population id above to parent pool
             parent_pool.append(population_id)
         return parent_pool
 
@@ -174,3 +178,4 @@ if __name__ == "__main__":
     result = ga.tournament_selection(population=ga.population,
                                      tournament_size=10, parent_pool_size=100)
     print(result)
+    print(len(result))
