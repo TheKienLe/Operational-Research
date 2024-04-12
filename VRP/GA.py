@@ -37,7 +37,7 @@ class GA:
         # Initial population {index = [chromosome, fitness_score]}
         self.population = self.initialize_population(self.pop_size)
 
-        # Best individual (update after finishing fitness_score function)
+        # Best individual (update after finishing fitness_score function) [chromosome, fitness_score]
         self.best_indi = self.find_best_indi(self.population)
 
     def initialize_population(self, population_size=50):
@@ -105,6 +105,46 @@ class GA:
             parent_pool.append(population_id)
         return parent_pool
 
+    def capacity_constraint(self, individual, inserted_note):
+        test_route = total_route(individual, 0)
+        result = [0]
+        for route in test_route:
+            route.append(inserted_note)
+            # current capacity
+            current_cap = np.array([0]*self.num_compart, dtype=np.float32)
+            for node in route:
+                # update current capacity
+                current_cap += self.hospital_qty[node]
+
+            if current_cap > self.vehicle_cap:
+                return   # return False
+        # concatenate test_route to final result
+        for i in test_route:
+            result += i + [0]
+        return result
+
+    def crossover(self, parent1, parent2):  # parent type [chromosome, fitness]
+        num_total_route = np.array([
+            len(total_route(parent1, 0)), len(total_route(parent2, 0))])
+        num_route_cross = np.floor(
+            num_total_route * self.cross_rate).astype(int)
+
+        parent_route_1 = total_route(parent1[0], 0)
+        parent_route_2 = total_route(parent2[0], 0)
+        cross_route1 = select_route_cross(parent_route_1, 2)
+        cross_route2 = select_route_cross(parent_route_2, 2)
+        result = []  # the place to contain all offsprings
+
+        # remove element in route1 out of parent2[0]
+        for route1 in cross_route1:
+            chromosome2 = [node for node in parent2[0] if node not in route1]
+            # insert element from route1 to parent2[0] to get new offspring
+            for node in route1:
+                pass
+                # remove element in route2 out of parent1[0]
+        for route2 in cross_route2:
+            chromosome1 = [node for node in parent2[0] if node not in route2]
+
 
 def read_data(url):
     df = pd.read_excel(url, "parameters")
@@ -166,16 +206,9 @@ if __name__ == "__main__":
     instance = read_data("data.xlsx")
 
     ga = GA(instance, GA_params)
-    # print(ga.population[:3])
-    # population = ga.population
-    # distance = ga.travel_dist
-    # fittest_score = ga.fittest_score(population, distance)
-    # print(fittest_score)
-    # print(ga.minimize(fittest_score))
-    # print(ga.best_ind)
     print(ga.population)
-    print(ga.best_indi)
-    result = ga.tournament_selection(population=ga.population,
-                                     tournament_size=10, parent_pool_size=100)
-    print(result)
-    print(len(result))
+    # print(ga.best_indi)
+    # result = ga.tournament_selection(population=ga.population,
+    #                                  tournament_size=10, parent_pool_size=100)
+    # print(result)
+    # print(len(result))
