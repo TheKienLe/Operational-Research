@@ -87,7 +87,6 @@ class GA:
 
         values_arr = np.array([value[1] for value in population.values()])
         best_indi_index = np.argmin(values_arr)
-
         return population[best_indi_index]
 
     def tournament_selection(self, population, tournament_size, parent_pool_size):
@@ -105,45 +104,73 @@ class GA:
             parent_pool.append(population_id)
         return parent_pool
 
-    def capacity_constraint(self, individual, inserted_note):
-        test_route = total_route(individual, 0)
-        result = [0]
-        for route in test_route:
-            route.append(inserted_note)
-            # current capacity
-            current_cap = np.array([0]*self.num_compart, dtype=np.float32)
-            for node in route:
-                # update current capacity
-                current_cap += self.hospital_qty[node]
+    # processed_individual is parent after removing cross route
+    # inserted_node is a list contain
+    def capacity_constraint(self, processed_individual, inserted_node):
+        test_route = total_route(processed_individual, 0)
+        # offspring = []
+        for isn in inserted_node:
+            print("Inserting: ", isn)
+            cp_test_route = test_route.copy()
+            print("Testing at whole route: ", cp_test_route)
+            temp_off = []
+            for route in cp_test_route:
+                # cp_test_route = test_route.copy()
+                print("    On route: ", route)
+                for idx in range(len(route)):
+                    print("        Inserting at idx ", idx)
+                    cp_route = route.copy()
+                    cp_test_route2 = cp_test_route.copy()
+                    cp_route.insert(idx, isn)
+                    cp_test_route2[cp_test_route.index(route)] = cp_route
 
-            if current_cap > self.vehicle_cap:
-                return   # return False
-        # concatenate test_route to final result
-        for i in test_route:
-            result += i + [0]
-        return result
+                    # calculate capacity
+                    current_cap = np.array(
+                        [0]*self.num_compart, dtype=np.float32)
 
-    def crossover(self, parent1, parent2):  # parent type [chromosome, fitness]
+                    for node in cp_route:
+                        # update current capacity
+                        current_cap += self.hospital_qty[node]
+
+                    if (current_cap <= self.vehicle_cap).all():
+                        temp_off.append(
+                            [cp_test_route2, self.fittest_score(join_lst_lst(cp_test_route2))])
+                    else:
+                        temp_off.append([cp_test_route2, np.inf])
+            test_route = min_lst(temp_off)
+        return join_lst_lst(test_route)
+
+    # parent type [chromosome, fitness]
+    def crossover(self, parent1, parent2):
         num_total_route = np.array([
-            len(total_route(parent1, 0)), len(total_route(parent2, 0))])
+            len(total_route(parent1[0], 0)), len(total_route(parent2[0], 0))])
         num_route_cross = np.floor(
             num_total_route * self.cross_rate).astype(int)
 
         parent_route_1 = total_route(parent1[0], 0)
         parent_route_2 = total_route(parent2[0], 0)
-        cross_route1 = select_route_cross(parent_route_1, 2)
-        cross_route2 = select_route_cross(parent_route_2, 2)
+        cross_route1 = select_route_cross(parent_route_1, num_route_cross[0])
+        cross_route2 = select_route_cross(parent_route_2, num_route_cross[1])
         result = []  # the place to contain all offsprings
+        # print(cross_route1, cross_route2)
 
-        # remove element in route1 out of parent2[0]
+        # remove cross route inside parent
+        chromosome2 = parent2[0].copy()
         for route1 in cross_route1:
-            chromosome2 = [node for node in parent2[0] if node not in route1]
-            # insert element from route1 to parent2[0] to get new offspring
-            for node in route1:
-                pass
-                # remove element in route2 out of parent1[0]
+            for route in route1:
+                if route in chromosome2:
+                    chromosome2.remove(route)
+
+        chromosome1 = parent1[0].copy()
         for route2 in cross_route2:
-            chromosome1 = [node for node in parent2[0] if node not in route2]
+            for route in route2:
+                if route in chromosome1:
+                    chromosome1.remove(route)
+        result.append(self.capacity_constraint(
+            chromosome1, join_cross_route(cross_route2)))
+        result.append(self.capacity_constraint(
+            chromosome2, join_cross_route(cross_route1)))
+        return result
 
 
 def read_data(url):
@@ -206,9 +233,8 @@ if __name__ == "__main__":
     instance = read_data("data.xlsx")
 
     ga = GA(instance, GA_params)
-    print(ga.population)
-    # print(ga.best_indi)
-    # result = ga.tournament_selection(population=ga.population,
-    #                                  tournament_size=10, parent_pool_size=100)
-    # print(result)
-    # print(len(result))
+    # print(ga.population)
+
+    parent1 = [[0, 7, 3, 0, 2, 0, 6, 1, 4, 0, 5, 0], 321.32]
+    parent2 = [[0, 7, 5, 0, 1, 2, 0, 4, 3, 6, 0], 249.32]
+    print(ga.crossover(parent1, parent2))

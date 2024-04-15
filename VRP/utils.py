@@ -10,7 +10,7 @@ def lst_to_dict(lst):
     return q
 
 
-def total_route(parent, split_at_value):  # parent input lst []
+def total_route(parent, split_at_value):  # parent input list []
     my_lst = np.array(parent)
     # np.where(condition) return a tupple like: (result that satisfied condition, data_type)
     # np.where(condition)[0] access first element of tuple
@@ -24,16 +24,38 @@ def total_route(parent, split_at_value):  # parent input lst []
 
 
 # total_round_of_parent from total_route func
-def select_route_cross(total_round_of_parent, num_route_cross):
-    cross_route = random.sample(total_round_of_parent, k=num_route_cross)
+def select_route_cross(total_route_of_parent, num_route_cross):
+    cross_route = []
+    while len(cross_route) < 2:
+        random_route = random.choice(total_route_of_parent)
+        if random_route not in cross_route:
+            cross_route.append(random_route)
     return cross_route
 
+# concatenate list
 
-def remove_zeros(individual):
-    # for i in range(len(individual)):
-    #     if individual[i] == 0 and individual[i+1] == 0:
-    #         individual.remove(individual[i])
-    pass
+
+def join_lst_lst(lst):  # input is a list in list i.e [[1, 2], [3,4] ,...]
+    result = [0]
+    for element in lst:
+        result += element
+        result += [0]
+    return result
+
+
+def join_cross_route(lst):
+    result = []
+    for element in lst:
+        result += element
+    return result
+
+# min list to find offspring input is list with format [[[[1, 2, 4], [3,5], [10]], fitness_score]]
+
+
+def min_lst(lst):
+    initial_arr = np.array([value[1] for value in lst])
+    min_idx = np.argmin(initial_arr)
+    return lst[min_idx][0]
 
 # testing function
 
@@ -44,18 +66,27 @@ def crossover(parent1, parent2):  # parent type [chromosome, fitness]
     cross_route1 = select_route_cross(parent_route_1, 2)
     cross_route2 = select_route_cross(parent_route_2, 2)
     result = []  # the place to contain all offsprings
-    # remove element in route1 out of parent2[0]
+
+    chromosome2 = parent2[0].copy()
     for route1 in cross_route1:
-        chromosome2 = [node for node in parent2[0] if node not in route1]
-        # insert element from route1 to parent2[0] to get new offspring
-        for node in route1:
-            pass
-            # remove element in route2 out of parent1[0]
+        for route in route1:
+            chromosome2.remove(route)
+
+    chromosome1 = parent1[0].copy()
     for route2 in cross_route2:
-        chromosome1 = [node for node in parent2[0] if node not in route2]
+        for route in route2:
+            chromosome1.remove(route)
+
+    # print(join_lst_lst(total_route(chromosome1, 0)),
+    #       join_lst_lst(total_route(chromosome2, 0)))
+    # print(cross_route2, cross_route1)
 
 
 parent1 = [[0, 7, 0, 2, 0, 6, 4, 1, 0, 3, 5, 0], 322.96]
 parent2 = [[0, 1, 6, 0, 7, 0, 2, 0, 3, 5, 0, 4, 0], 338.49]
-test_route = [0, 1, 2, 4, 0, 0, 0, 6, 8, 0]
-print(total_route(test_route, 0))
+
+# print(crossover(parent1, parent2))
+# test = [0, 1, 0, 4, 6, 9, 0, 4, 2, 0]
+# print(join_lst_lst(total_route(test, 0)))
+
+# print(min_lst([[[[1, 2], [3, 4]], 10], [[[4, 5], [7, 8], [9, 10]], 100]]))
