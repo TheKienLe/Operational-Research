@@ -86,7 +86,8 @@ parent1 = [[0, 7, 0, 2, 0, 6, 4, 1, 0, 3, 5, 0], 322.96]
 parent2 = [[0, 1, 6, 0, 7, 0, 2, 0, 3, 5, 0, 4, 0], 338.49]
 
 # print(crossover(parent1, parent2))
-# test = [0, 1, 0, 4, 6, 9, 0, 4, 2, 0]
-# print(join_lst_lst(total_route(test, 0)))
+test = [0, 1, 0, 4, 6, 9, 0, 4, 2, 0]
+print(total_route(test, 0))
+print(join_lst_lst(total_route(test, 0)))
 
 # print(min_lst([[[[1, 2], [3, 4]], 10], [[[4, 5], [7, 8], [9, 10]], 100]]))

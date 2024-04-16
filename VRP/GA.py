@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import random
 import math
+import os
 from utils import *
 
 
@@ -26,6 +27,7 @@ class GA:
 
         # Travel distance between hospital_i and hospital_j
         self.travel_dist = instance["travel_dist"]
+        print(self.travel_dist)
 
         # GA parameters
         self.pop_size = GA_params["pop_size"]  # population size
@@ -79,7 +81,7 @@ class GA:
         for node_index in range(len(individual) - 1):
             d1 = individual[node_index]
             d2 = individual[node_index+1]
-            total_distance += self.travel_dist[(d1, d2)]
+            total_distance += self.travel_dist[(d1, d2)]  # {(i, k) : value}
 
         return total_distance
 
@@ -137,7 +139,9 @@ class GA:
                             [cp_test_route2, self.fittest_score(join_lst_lst(cp_test_route2))])
                     else:
                         temp_off.append([cp_test_route2, np.inf])
+                    print("        Temp Offspring: ", temp_off)
             test_route = min_lst(temp_off)
+            print("        Test_route:, ", test_route)
         return join_lst_lst(test_route)
 
     # parent type [chromosome, fitness]
@@ -152,7 +156,8 @@ class GA:
         cross_route1 = select_route_cross(parent_route_1, num_route_cross[0])
         cross_route2 = select_route_cross(parent_route_2, num_route_cross[1])
         result = []  # the place to contain all offsprings
-        # print(cross_route1, cross_route2)
+        print(parent2[0], parent1[0])
+        print(cross_route1, cross_route2)
 
         # remove cross route inside parent
         chromosome2 = parent2[0].copy()
@@ -234,7 +239,8 @@ if __name__ == "__main__":
 
     ga = GA(instance, GA_params)
     # print(ga.population)
-
+    os.system('cls')
     parent1 = [[0, 7, 3, 0, 2, 0, 6, 1, 4, 0, 5, 0], 321.32]
     parent2 = [[0, 7, 5, 0, 1, 2, 0, 4, 3, 6, 0], 249.32]
+    test = [0, 1, 0, 4, 6, 7, 0, 4, 2, 0]
     print(ga.crossover(parent1, parent2))
