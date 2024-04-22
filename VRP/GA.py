@@ -106,8 +106,8 @@ class GA:
             parent_pool.append(population_id)
         return parent_pool
 
-    # processed_individual is parent after removing cross route
-    # inserted_node is a list contain
+    # processed_individual is parent after removing cross route [[1,2], [3, 4]]
+    # inserted_node is a list contain # ["I" , "J"]
     def capacity_constraint(self, processed_individual, inserted_node):
         test_route = total_route(processed_individual, 0)
         # offspring = []
@@ -115,16 +115,19 @@ class GA:
             print("Inserting: ", isn)
             cp_test_route = test_route.copy()
             print("Testing at whole route: ", cp_test_route)
-            temp_off = []
+            temp_off = []  # [[[I, 1,2], [3,4]] , [[1,I, 2], [3,4]]] -> insert I find min distance -> test_route
             for route in cp_test_route:
                 # cp_test_route = test_route.copy()
                 print("    On route: ", route)
-                for idx in range(len(route)):
+                for idx in range(len(route)+1):
                     print("        Inserting at idx ", idx)
                     cp_route = route.copy()
+                    #
                     cp_test_route2 = cp_test_route.copy()
+                    # [1,2] --> idx = 0 [I, 1, 2] idx = 1 [1, I, 2] idx = 2 [1, 2 I]
                     cp_route.insert(idx, isn)
-                    cp_test_route2[cp_test_route.index(route)] = cp_route
+                    cp_test_route2[cp_test_route.index(
+                        route)] = cp_route  # [[1,2], [3, 4]]
 
                     # calculate capacity
                     current_cap = np.array(
@@ -149,11 +152,12 @@ class GA:
         num_total_route = np.array([
             len(total_route(parent1[0], 0)), len(total_route(parent2[0], 0))])
         num_route_cross = np.floor(
-            num_total_route * self.cross_rate).astype(int)
+            num_total_route * self.cross_rate).astype(int)  # [2 , 2]
 
         parent_route_1 = total_route(parent1[0], 0)
         parent_route_2 = total_route(parent2[0], 0)
-        cross_route1 = select_route_cross(parent_route_1, num_route_cross[0])
+        cross_route1 = select_route_cross(
+            parent_route_1, num_route_cross[0])  # [[1,2], [3,4]] -> [1,2,3,4]
         cross_route2 = select_route_cross(parent_route_2, num_route_cross[1])
         result = []  # the place to contain all offsprings
         print(parent2[0], parent1[0])
@@ -161,7 +165,7 @@ class GA:
 
         # remove cross route inside parent
         chromosome2 = parent2[0].copy()
-        for route1 in cross_route1:
+        for route1 in cross_route1:  # [[1,2], [3,4]]
             for route in route1:
                 if route in chromosome2:
                     chromosome2.remove(route)
@@ -171,11 +175,89 @@ class GA:
             for route in route2:
                 if route in chromosome1:
                     chromosome1.remove(route)
+
         result.append(self.capacity_constraint(
             chromosome1, join_cross_route(cross_route2)))
+
         result.append(self.capacity_constraint(
             chromosome2, join_cross_route(cross_route1)))
         return result
+
+    # swap
+    # input offspring as [offspring, fitness_score]
+    def swap_two_node(self, offspring):
+        # create list contain all route [0,1,2,0,3,4,0] --> [[1,2], [3,4]]
+        mutation_route = total_route(offspring[0], 0)
+        # only subroute with len >= 2 can be swapped
+        while True:
+            # select a route to swap
+            selected_route = random.choice(mutation_route)
+            if len(selected_route) >= 2:
+                idx1, idx2 = random.sample(range(len(selected_route)), k=2)
+                selected_route[idx1], selected_route[idx2] = selected_route[idx2], selected_route[idx1]
+                offspring[0] = join_lst_lst(mutation_route)
+                break
+
+        offspring[1] = self.fittest_score(offspring[0])
+        return offspring
+
+    # inversion
+    # input offspring as [offspring, fitness_score]
+    def inversion_node(self, offspring):
+        # create list contain all route [0,1,2,0,3,4,0] --> [[1,2], [3,4]]
+        mutation_route = total_route(offspring[0], 0)
+        # only subroute with len >= 2 can be swapped
+        while True:
+            # select a route to swap
+            selected_route = random.choice(mutation_route)
+            if len(selected_route) >= 2:
+                selected_route.reverse()
+                offspring[0] = join_lst_lst(mutation_route)
+                break
+
+        offspring[1] = self.fittest_score(offspring[0])
+        return offspring
+
+    # evolution
+    def evol(self):
+
+        # loop through all generation
+        for _ in range(self.gen_max):
+            new_population = []
+            # Create pool
+            pool = self.tournament_selection(
+                self.population, tournament_size=50, parent_pool_size=100)
+            print(pool[0:3])
+
+            for i in range(len(self.population) // 2):
+                idx1 = 2*i
+                idx2 = 2*i+1
+
+                # select parent
+                parent1 = self.population[idx1]
+                parent2 = self.population[idx2]
+
+                # crossover
+                off1, off2 = self.crossover(parent1, parent2)
+                off1 = [off1, self.fittest_score(off1)]
+                off2 = [off2, self.fittest_score(off2)]
+
+                # mutation
+                # random in [0, 1]
+                # swap_rate = 0.05, inversion_rate = 0.05 --> rate
+                rate = np.random.rand()
+                if rate <= self.mutate_prob:  # rate > mutate_prob -->
+                    # off1 = np.random.choice(
+                    #     [self.swap_two_node(off1), self.inversion_node(off1)])
+                    # off2 = np.random.choice(
+                    #     [self.swap_two_node(off2), self.inversion_node(off2)])
+                    off1 = self.swap_two_node(off1)
+                    off2 = self.swap_two_node(off2)
+
+                new_population.append(off1)
+                new_population.append(off2)
+            self.population = new_population
+        return self.population
 
 
 def read_data(url):
@@ -238,9 +320,14 @@ if __name__ == "__main__":
     instance = read_data("data.xlsx")
 
     ga = GA(instance, GA_params)
-    # print(ga.population)
     os.system('cls')
-    parent1 = [[0, 7, 3, 0, 2, 0, 6, 1, 4, 0, 5, 0], 321.32]
-    parent2 = [[0, 7, 5, 0, 1, 2, 0, 4, 3, 6, 0], 249.32]
-    test = [0, 1, 0, 4, 6, 7, 0, 4, 2, 0]
-    print(ga.crossover(parent1, parent2))
+    # print(ga.population)
+    parent1 = [[0, 5, 3, 6, 0, 7, 0, 1, 2, 0, 4, 0], 324.42999999999995]
+    parent2 = [[0, 7, 6, 0, 2, 0, 3, 4, 0, 5, 1, 0], 293.85]
+    test = [[0, 1, 0, 4, 6, 7, 0, 4, 2, 0], 100]
+    # print(ga.tournament_selection(ga.population, 50, 100))
+    # print(ga.evol())
+    # print(ga.crossover(parent1, parent2))
+    print(ga.population)
+    print(ga.tournament_selection(ga.population, 10, 100))
+    print(ga.evol())

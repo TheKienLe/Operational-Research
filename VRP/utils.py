@@ -35,7 +35,8 @@ def select_route_cross(total_route_of_parent, num_route_cross):
 # concatenate list
 
 
-def join_lst_lst(lst):  # input is a list in list i.e [[1, 2], [3,4] ,...]
+# input is a list in list i.e [[1, 2], [3,4] ,...] - [0,1,2,0,3,4,0]
+def join_lst_lst(lst):
     result = [0]
     for element in lst:
         result += element
@@ -43,7 +44,7 @@ def join_lst_lst(lst):  # input is a list in list i.e [[1, 2], [3,4] ,...]
     return result
 
 
-def join_cross_route(lst):
+def join_cross_route(lst):  # [[1,2], [4,5]] --> [1,2,4,5]
     result = []
     for element in lst:
         result += element
@@ -57,37 +58,36 @@ def min_lst(lst):
     min_idx = np.argmin(initial_arr)
     return lst[min_idx][0]
 
+
 # testing function
 
+    # def crossover(parent1, parent2):  # parent type [chromosome, fitness]
+    #     parent_route_1 = total_route(parent1[0], 0)
+    #     parent_route_2 = total_route(parent2[0], 0)
+    #     cross_route1 = select_route_cross(parent_route_1, 2)
+    #     cross_route2 = select_route_cross(parent_route_2, 2)
+    #     result = []  # the place to contain all offsprings
 
-def crossover(parent1, parent2):  # parent type [chromosome, fitness]
-    parent_route_1 = total_route(parent1[0], 0)
-    parent_route_2 = total_route(parent2[0], 0)
-    cross_route1 = select_route_cross(parent_route_1, 2)
-    cross_route2 = select_route_cross(parent_route_2, 2)
-    result = []  # the place to contain all offsprings
+    #     chromosome2 = parent2[0].copy()
+    #     for route1 in cross_route1:
+    #         for route in route1:
+    #             chromosome2.remove(route)
 
-    chromosome2 = parent2[0].copy()
-    for route1 in cross_route1:
-        for route in route1:
-            chromosome2.remove(route)
+    #     chromosome1 = parent1[0].copy()
+    #     for route2 in cross_route2:
+    #         for route in route2:
+    #             chromosome1.remove(route)
 
-    chromosome1 = parent1[0].copy()
-    for route2 in cross_route2:
-        for route in route2:
-            chromosome1.remove(route)
+    #     # print(join_lst_lst(total_route(chromosome1, 0)),
+    #     #       join_lst_lst(total_route(chromosome2, 0)))
+    #     # print(cross_route2, cross_route1)
 
-    # print(join_lst_lst(total_route(chromosome1, 0)),
-    #       join_lst_lst(total_route(chromosome2, 0)))
-    # print(cross_route2, cross_route1)
+    # parent1 = [[0, 7, 0, 2, 0, 6, 4, 1, 0, 3, 5, 0], 322.96]
+    # parent2 = [[0, 1, 6, 0, 7, 0, 2, 0, 3, 5, 0, 4, 0], 338.49]
 
+    # # print(crossover(parent1, parent2))
+    # test = [0, 1, 0, 4, 6, 9, 0, 4, 2, 0]
+    # print(total_route(test, 0))
+    # print(join_lst_lst(total_route(test, 0)))
 
-parent1 = [[0, 7, 0, 2, 0, 6, 4, 1, 0, 3, 5, 0], 322.96]
-parent2 = [[0, 1, 6, 0, 7, 0, 2, 0, 3, 5, 0, 4, 0], 338.49]
-
-# print(crossover(parent1, parent2))
-test = [0, 1, 0, 4, 6, 9, 0, 4, 2, 0]
-print(total_route(test, 0))
-print(join_lst_lst(total_route(test, 0)))
-
-# print(min_lst([[[[1, 2], [3, 4]], 10], [[[4, 5], [7, 8], [9, 10]], 100]]))
+    # # print(min_lst([[[[1, 2], [3, 4]], 10], [[[4, 5], [7, 8], [9, 10]], 100]]))
