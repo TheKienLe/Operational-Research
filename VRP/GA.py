@@ -112,15 +112,15 @@ class GA:
         test_route = total_route(processed_individual, 0)
         # offspring = []
         for isn in inserted_node:
-            print("Inserting: ", isn)
+            # print("Inserting: ", isn)
             cp_test_route = test_route.copy()
-            print("Testing at whole route: ", cp_test_route)
+            # print("Testing at whole route: ", cp_test_route)
             temp_off = []  # [[[I, 1,2], [3,4]] , [[1,I, 2], [3,4]]] -> insert I find min distance -> test_route
             for route in cp_test_route:
                 # cp_test_route = test_route.copy()
-                print("    On route: ", route)
+                # print("    On route: ", route)
                 for idx in range(len(route)+1):
-                    print("        Inserting at idx ", idx)
+                    # print("        Inserting at idx ", idx)
                     cp_route = route.copy()
                     #
                     cp_test_route2 = cp_test_route.copy()
@@ -142,9 +142,9 @@ class GA:
                             [cp_test_route2, self.fittest_score(join_lst_lst(cp_test_route2))])
                     else:
                         temp_off.append([cp_test_route2, np.inf])
-                    print("        Temp Offspring: ", temp_off)
+                    # print("        Temp Offspring: ", temp_off)
             test_route = min_lst(temp_off)
-            print("        Test_route:, ", test_route)
+            # print("        Test_route:, ", test_route)
         return join_lst_lst(test_route)
 
     # parent type [chromosome, fitness]
@@ -160,8 +160,8 @@ class GA:
             parent_route_1, num_route_cross[0])  # [[1,2], [3,4]] -> [1,2,3,4]
         cross_route2 = select_route_cross(parent_route_2, num_route_cross[1])
         result = []  # the place to contain all offsprings
-        print(parent2[0], parent1[0])
-        print(cross_route1, cross_route2)
+        # print(parent2[0], parent1[0])
+        # print(cross_route1, cross_route2)
 
         # remove cross route inside parent
         chromosome2 = parent2[0].copy()
@@ -223,12 +223,14 @@ class GA:
 
         # loop through all generation
         for _ in range(self.gen_max):
-            new_population = []
+            new_population = dict()  # []
             # Create pool
             pool = self.tournament_selection(
                 self.population, tournament_size=50, parent_pool_size=100)
-            print(pool[0:3])
+            print(pool)
+            print(len(pool))
 
+            # population --> {idx: [individual, fittest_score]}
             for i in range(len(self.population) // 2):
                 idx1 = 2*i
                 idx2 = 2*i+1
@@ -254,9 +256,10 @@ class GA:
                     off1 = self.swap_two_node(off1)
                     off2 = self.swap_two_node(off2)
 
-                new_population.append(off1)
-                new_population.append(off2)
+                new_population[idx1] = off1
+                new_population[idx2] = off2
             self.population = new_population
+            print(self.population)
         return self.population
 
 
@@ -328,6 +331,6 @@ if __name__ == "__main__":
     # print(ga.tournament_selection(ga.population, 50, 100))
     # print(ga.evol())
     # print(ga.crossover(parent1, parent2))
-    print(ga.population)
+    # print(ga.population)
     print(ga.tournament_selection(ga.population, 10, 100))
     print(ga.evol())
