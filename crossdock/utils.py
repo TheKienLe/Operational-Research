@@ -9,3 +9,13 @@ def df_to_list(df, *args):
             print("Missing or too much args")
             return
     return result
+
+
+def summary_df(df):
+    result = dict()
+    for key, value in df:
+        if key in result:
+            result[key].append(value)
+        else:
+            result[key] = [value]
+    return result

@@ -23,15 +23,15 @@ def cross_dock_model(name):
     # parameter
     # floor capacity
     cap = df_to_list(pd.read_excel(
-        name, "location_floor_cluster")[["floor", "cap"]], "floor", "cap")
+        name, "location_floor_cluster"), "floor", "cap")
 
     # location each floor in each cluster
     y = df_to_list(pd.read_excel(name, "location_floor_cluster"),
-                   "floor", "cluster", "allocation_in_cluster")
+                   "cluster", "floor", "allocation_in_cluster")
 
     # distance from floor to shipping point
     distS = df_to_list(pd.read_excel(
-        name, "distance_floor_shipping")[["floor", "distance"]], "floor", "distance")
+        name, "distance_floor_shipping"), "floor", "distance")
 
     # distance picking carton in cluster
     distPcb = df_to_list(pd.read_excel(name, "distance_cluster").query(
@@ -71,17 +71,25 @@ def cross_dock_model(name):
     for s in S:
         for f in F:
             x[("s" + str(s), "f" + str(f))] = solver.BoolVar("")
+            # f 0 --> 39
+            # s 0 -> 9
+            # ()
+
     # number of visit to cluster
     NV = dict()
     for cl in CL:
         NV["cl" + str(cl)] = solver.IntVar(0, solver.infinity(), "")
     # constraint
     # 3
+
+    sumry = summary_df(y)
+    print(sumry)
     for s in S:
         for cl in CL:
-            for f in F:
-                solver.Add(NV["cl" + str(cl)] >= NS["s"+str(s)] *
-                           x[("s" + str(s), "f" + str(f))], "ct3")
+            for f in sumry["cl" + str(cl)]:
+                if y[("cl" + str(cl), f)] == 1:
+                    solver.Add(NV["cl" + str(cl)] >= NS["s"+str(s)] *
+                               x[("s" + str(s), f)], "ct3")
 
     # 4
     for f in F:
