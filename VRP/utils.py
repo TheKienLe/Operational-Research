@@ -25,11 +25,14 @@ def total_route(parent, split_at_value):  # parent input list []
 
 # total_round_of_parent from total_route func
 def select_route_cross(total_route_of_parent, num_route_cross):
-    cross_route = []
-    while len(cross_route) < 2:
-        random_route = random.choice(total_route_of_parent)
-        if random_route not in cross_route:
-            cross_route.append(random_route)
+    """
+    Input:
+    total_route_of_parent: route of parent,
+    """
+    arr = np.arange(0, len(total_route_of_parent))
+    route_indices = np.random.choice(arr, num_route_cross, replace=False)
+    cross_route = [total_route_of_parent[i] for i in route_indices]
+
     return cross_route
 
 # concatenate list
@@ -54,12 +57,29 @@ def join_cross_route(lst):  # [[1,2], [4,5]] --> [1,2,4,5]
 
 
 def min_lst(lst):
-    try:
-        initial_arr = np.array([value[1] for value in lst])
-        min_idx = np.argmin(initial_arr)
-        return lst[min_idx][0]
-    except:
-        pass
+    initial_arr = np.array([value[1] for value in lst])
+    min_idx = np.argmin(initial_arr)
+    return [lst[min_idx][0], lst[min_idx][1]]
+
+def sort_population(population, top_n):
+    sorted_values = sorted(population.values(), 
+                           key=lambda x: x[1])
+    
+    sorted_dict = {index: value 
+                   for index, value in enumerate(sorted_values)}
+    
+    sliced_dict = {key: sorted_dict[key] for key in list(sorted_dict.keys())[:top_n]}
+    
+    return sliced_dict
+
+def add_key_dict(population, added_value):
+    updated_dict = {key + added_value: value 
+                    for key, value in population.items()}
+    
+    return updated_dict
+
+    
+
         # testing function
 
         # def crossover(parent1, parent2):  # parent type [chromosome, fitness]

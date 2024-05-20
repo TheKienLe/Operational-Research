@@ -47,9 +47,11 @@ def vrp_model():
     Q = dict()
     q_temp = np.transpose(
         np.delete(np.array(pd.read_excel("data.xlsx", "capacity")), 0, 1))
+    print(q_temp)
     for i in range(len(q_temp[0])):
-        Q[i+1] = q_temp[0][i]
-
+        for k in K:
+            Q[(i+1, k)] = q_temp[k-1][i]
+    print(Q)
     solver = pywraplp.Solver.CreateSolver("SCIP")
     if not solver:
         return
@@ -102,35 +104,13 @@ def vrp_model():
                        for j in N if i != j) == y[(i, k)], "ct5")
 
     # ct6
-    # Why???
-    # bc6 = dict()
-    # for i in NC:
-    #     for j in NC:
-    #         for k in K:
-    #             for p in P:
-    #                 if i != j:
-    #                     bc6[(i, j, k, p)] = solver.IntVar(0, bigM, "")
-
-    # for i in NC:
-    #     for j in NC:
-    #         for k in K:
-    #             for p in P:
-    #                 if i != j:
-    #                     solver.Add(bc6[(i, j, k, p)] <= bigM * x[(i, j, k)])
-    #                     solver.Add(bc6[(i, j, k, p)] <= Q[p] +
-    #                                bigM * (1 - x[(i, j, k)]))
-    #                     solver.Add(bc6[(i, j, k, p)] >= Q[p] -
-    #                                bigM * (1 - x[(i, j, k)]))
-    #                     solver.Add(bc6[(i, j, k, p)] <= Q[p] -
-    #                                q[(j, p)] - u[(i, k, p)] + u[(j, k, p)], "ct6")
-
     for i in NC:
         for j in NC:
             for k in K:
                 for p in P:
                     if i != j:
-                        solver.Add(u[(i, k, p)] - u[(j, k, p)] + Q[p]
-                                   * x[(i, j, k)] <= Q[p] - q[(j, p)], "ct6")
+                        solver.Add(u[(i, k, p)] - u[(j, k, p)] + Q[(p, k)]
+                                   * x[(i, j, k)] <= Q[(p, k)] - q[(j, p)], "ct6")
 
     # ct7a
     # q_jp --> q_ip
@@ -139,7 +119,7 @@ def vrp_model():
         for p in P:
             for k in K:
                 solver.Add(q[(i, p)] <= u[(i, k, p)], "ct7a")
-                solver.Add(u[(i, k, p)] <= Q[p], "ct7b")
+                solver.Add(u[(i, k, p)] <= Q[(p, k)], "ct7b")
 
     # ct8
     for j in NC:
@@ -154,28 +134,10 @@ def vrp_model():
             solver.Add(solver.Sum([z[(j, k, p)] for k in K]) == 1, "ct9")
 
     # ct10
-    # bc10 = dict()
-    # for k in K:
-    #     for p in P:
-    #         for j in N:
-    #             if j != 0:
-    #                 bc10[(j, k, p)] = solver.IntVar(0, bigM, "")
-
-   # for k in K:
-    #     for p in P:
-    #         for j in N:
-    #             if j != 0:
-    #                 solver.Add(bc10[(j, k, p)] <= bigM * z[(j, k, p)])
-    #                 solver.Add(bc10[(j, k, p)] <= q[(j, p)] +
-    #                            bigM * (1 - z[(j, k, p)]))
-    #                 solver.Add(bc10[(j, k, p)] >= q[(j, p)] -
-    #                            bigM * (1 - z[(j, k, p)]))
-    #         solver.Add(solver.Sum([bc10[(j, k, p)]
-    #                    for j in N if j != 0]) <= Q[p], "ct10")
     for p in P:
         for k in K:
             solver.Add(solver.Sum([z[(j, k, p)] * q[(j, p)]
-                       for j in NC]) <= Q[p], "ct10")
+                       for j in NC]) <= Q[(p, k)], "ct10")
 
     # objective function
     solver.Minimize(solver.Sum([d[(i, j)] * x[(i, j, k)]
@@ -187,7 +149,7 @@ def vrp_model():
     # print solution
 
     if status == pywraplp.Solver.OPTIMAL or status == pywraplp.Solver.FEASIBLE:
-        print(f"Total makespan = {solver.Objective().Value()}")
+        print(f"Total distance = {solver.Objective().Value()}")
         for i in N:
             for k in K:
                 if y[(i, k)].solution_value() == 1:
