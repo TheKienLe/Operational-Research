@@ -151,17 +151,3 @@ def initialize_seq(F, Mk):
             result[(f, m)] = []
 
     return result
-
-
-# dictt = {"a": [1, 2], "b": [3, 4], "c": [5, 6]}
-# temp = []
-
-# for item in dictt:
-#     cp_dict = deepcopy(dictt)
-#     for i in range(len(dictt[item])+1):
-#         cp_dict[item].insert(i, 0)
-#         local_seq = deepcopy(cp_dict[item])
-#         temp.append([item, local_seq])
-#         cp_dict[item].pop(i)
-
-# print(temp)

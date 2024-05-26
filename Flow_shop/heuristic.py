@@ -21,11 +21,6 @@ def read_data(file_name):
 
     # set of sequences {seq1, seq2, ...}
     # type seq1 = (factory, machine): [sequence of job]
-    seq = {(0, 0): [1, 3], (1, 0): [0, 2], (1, 1): [
-        4, 5], (0, 1): [], (0, 2): [], (1, 2): []}
-
-    # seq = {(0, 0): [], (1, 0): [3], (1, 1): [
-    # ], (0, 1): [], (0, 2): [], (1, 2): []}
 
     # set of starting time for job i at stage k
     # {(job, stage): starting_time}
@@ -43,17 +38,14 @@ def read_data(file_name):
     # nested list [[1,2,5], [4,3]]
     job_at_fac = []
 
-    return N, F, K, Mk, p, seq
+    return N, F, K, Mk, p
 
 
 data = read_data("data.xlsx")
 
-# total make_span function
-# seq = DENH_Dipak(data)
 
-
-def total_make_span(data):
-    N, F, K, Mk, p, seq = data
+def total_make_span(data, seq):
+    N, F, K, Mk, p = data
     total_seq = []
     new_seq = deepcopy(seq)   # copy function nhu lol --> deepcopy()
     job_at_fac = extract_job_at_fac_from_seq(new_seq)
@@ -99,7 +91,7 @@ def total_make_span(data):
 
 def DENH_Dipak(data):
     data = list(data)  # tupple --> list
-    N, F, K, Mk, p = data[0: len(data) - 1]
+    N, F, K, Mk, p = data
     pi = total_pro_time(N, K, p)
     job_ord = argsort(pi)
     seq = initialize_seq(F, Mk)
@@ -110,19 +102,20 @@ def DENH_Dipak(data):
 
         for item in cp_seq:
             temp_seq = deepcopy(cp_seq)
+            # print("temp_seq: ", temp_seq)
             if temp_seq[item] == []:
                 temp_seq[item].append(job)
-                data[-1] = temp_seq
+                # data[-1] = temp_seq
                 temp_job_seq = deepcopy(temp_seq[item])
                 job_makespan.append(
-                    [(item), temp_job_seq, total_make_span(data)[0]])
+                    [(item), temp_job_seq, total_make_span(data, temp_seq)[0]])
             else:
                 for i in range(len(temp_seq[item])+1):
                     temp_seq[item].insert(i, job)
-                    data[-1] = temp_seq
+                    # data[-1] = temp_seq
                     temp_job_seq = deepcopy(temp_seq[item])
                     job_makespan.append(
-                        [(item), temp_job_seq, total_make_span(data)[0]])
+                        [(item), temp_job_seq, total_make_span(data, temp_seq)[0]])
                     temp_seq[item].pop(i)
 
         min_value = job_makespan[0][2]
@@ -139,17 +132,10 @@ def DENH_Dipak(data):
                 job_seq = job_makespan[i][1]
                 break
         seq[fm] = job_seq
-        # print("job_seq: ", job_seq)
-        # print(max_value)
 
-        # if job == 2:
-        #     print(job_makespan)
-        #     print(seq)
-        #     break
-
-    # print(job_ord)
     return seq
 
 
-print(total_make_span(data))
-print(DENH_Dipak(data))
+seq = DENH_Dipak(data)
+print(seq)
+print(total_make_span(data, seq))
