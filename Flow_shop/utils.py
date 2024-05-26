@@ -1,3 +1,6 @@
+from copy import deepcopy
+
+
 def distance_dict(df):
     result = dict()
     rows = df.shape[0]
@@ -30,9 +33,8 @@ def nested_to_dict(lst):
 
     return result
 
+
 # remove zeros value in dictionary
-
-
 def remove_zero_value(dictionary):
     result = dict()
     for item in dictionary:
@@ -79,9 +81,6 @@ def extract_job_at_fac_from_seq(seq):
             job_at_fac[item[0]] += seq[item]
     return job_at_fac
 
-# def extract_job_at_fac_from_seq(seq):
-#     job_at_fac
-
 
 def sort_by_value(data):  # data is dictionary
 
@@ -89,9 +88,6 @@ def sort_by_value(data):  # data is dictionary
            (kv[1], kv[0]))
 
     return data
-
-
-print(sort_by_value({0: 5.0, 2: 7.0, 4: 7.0, 5: 10.0}))
 
 
 def empty_dict_with_F_M(F, Mk, stage, K):
@@ -106,3 +102,66 @@ def empty_dict_with_F_M(F, Mk, stage, K):
 
 def last_finish_time_of_the_last_stage(FT):
     return max(FT.values())
+
+
+def total_pro_time(N, K, p):
+
+    result = []
+
+    for job in range(N):
+        job_time = 0
+        for stage in range(K):
+            job_time += p[(job, stage)]
+
+        result.append(job_time)
+    return result
+
+
+def argsort(lst):
+    cp_lst = lst.copy()
+    result = []
+    for i in range(len(lst)):
+        if i == len(lst) - 1:
+            break
+        for j in range(i+1, len(lst)):
+            if lst[j] > lst[i]:
+                lst[i], lst[j] = lst[j], lst[i]  # swap value
+
+    for value in lst:
+        idx = cp_lst.index(value)
+        if idx in result:
+            appearance = []
+            for id in range(len(cp_lst)):
+                if cp_lst[id] == value:
+                    appearance.append(id)
+            if appearance.index(idx) != len(appearance) - 1:
+                idx = appearance[appearance.index(idx) + 1]
+                result.append(idx)
+        else:
+            result.append(idx)
+
+    return result
+
+
+def initialize_seq(F, Mk):
+    # initialize at stage 0
+    result = dict()
+    for f in range(F):
+        for m in range(Mk[0]):
+            result[(f, m)] = []
+
+    return result
+
+
+# dictt = {"a": [1, 2], "b": [3, 4], "c": [5, 6]}
+# temp = []
+
+# for item in dictt:
+#     cp_dict = deepcopy(dictt)
+#     for i in range(len(dictt[item])+1):
+#         cp_dict[item].insert(i, 0)
+#         local_seq = deepcopy(cp_dict[item])
+#         temp.append([item, local_seq])
+#         cp_dict[item].pop(i)
+
+# print(temp)

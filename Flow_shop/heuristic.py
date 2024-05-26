@@ -24,6 +24,9 @@ def read_data(file_name):
     seq = {(0, 0): [1, 3], (1, 0): [0, 2], (1, 1): [
         4, 5], (0, 1): [], (0, 2): [], (1, 2): []}
 
+    # seq = {(0, 0): [], (1, 0): [3], (1, 1): [
+    # ], (0, 1): [], (0, 2): [], (1, 2): []}
+
     # set of starting time for job i at stage k
     # {(job, stage): starting_time}
     ST = dict()
@@ -45,15 +48,16 @@ def read_data(file_name):
 
 data = read_data("data.xlsx")
 
+# total make_span function
+# seq = DENH_Dipak(data)
 
-# total make_span func
+
 def total_make_span(data):
     N, F, K, Mk, p, seq = data
-
     total_seq = []
     new_seq = deepcopy(seq)   # copy function nhu lol --> deepcopy()
     job_at_fac = extract_job_at_fac_from_seq(new_seq)
-    print(job_at_fac)
+
     ST = nested_to_dict(np.zeros([N, K]))
     FT = nested_to_dict(np.zeros([N, K]))
 
@@ -67,7 +71,8 @@ def total_make_span(data):
                     for i in seq[(f, m)][:j_idx+1]:
                         FT[(j, stage)] += p[(i, stage)]
                         ST[(j, stage + 1)] = FT[(j, stage)]
-            fac_time[f] = finish_time_at_fac(remove_zero_value(FT))
+            if remove_zero_value(FT) != {}:
+                fac_time[f] = finish_time_at_fac(remove_zero_value(FT))
 
         # Save the seq of stage k total seq
         total_seq.append(seq)
@@ -80,7 +85,6 @@ def total_make_span(data):
             for j in job_at_fac[f]:
                 fin_time_at_fac[j] = FT[j, stage]
 
-            print(fin_time_at_fac)
             fin_time_at_fac = sort_by_value(fin_time_at_fac)
             if stage == K - 1:
                 break
@@ -90,9 +94,62 @@ def total_make_span(data):
                 seq[(f, m)].append(j)
 
     makespan = last_finish_time_of_the_last_stage(FT)
-    print(len(total_seq))
     return makespan, total_seq
 
 
-if __name__ == "__main__":
-    print(total_make_span(data))
+def DENH_Dipak(data):
+    data = list(data)  # tupple --> list
+    N, F, K, Mk, p = data[0: len(data) - 1]
+    pi = total_pro_time(N, K, p)
+    job_ord = argsort(pi)
+    seq = initialize_seq(F, Mk)
+
+    for job in job_ord:
+        cp_seq = deepcopy(seq)
+        job_makespan = []  # [ [(f, m), [job_seq], makespan] ]
+
+        for item in cp_seq:
+            temp_seq = deepcopy(cp_seq)
+            if temp_seq[item] == []:
+                temp_seq[item].append(job)
+                data[-1] = temp_seq
+                temp_job_seq = deepcopy(temp_seq[item])
+                job_makespan.append(
+                    [(item), temp_job_seq, total_make_span(data)[0]])
+            else:
+                for i in range(len(temp_seq[item])+1):
+                    temp_seq[item].insert(i, job)
+                    data[-1] = temp_seq
+                    temp_job_seq = deepcopy(temp_seq[item])
+                    job_makespan.append(
+                        [(item), temp_job_seq, total_make_span(data)[0]])
+                    temp_seq[item].pop(i)
+
+        min_value = job_makespan[0][2]
+
+        for i in range(len(job_makespan)):
+            if job_makespan[i][2] < min_value:
+                min_value = job_makespan[i][2]
+
+        fm = tuple()
+        job_seq = []
+        for i in range(len(job_makespan)):
+            if min_value == job_makespan[i][2]:
+                fm = job_makespan[i][0]
+                job_seq = job_makespan[i][1]
+                break
+        seq[fm] = job_seq
+        # print("job_seq: ", job_seq)
+        # print(max_value)
+
+        # if job == 2:
+        #     print(job_makespan)
+        #     print(seq)
+        #     break
+
+    # print(job_ord)
+    return seq
+
+
+print(total_make_span(data))
+print(DENH_Dipak(data))
