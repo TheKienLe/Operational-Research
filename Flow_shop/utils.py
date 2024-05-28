@@ -151,3 +151,18 @@ def initialize_seq(F, Mk):
             result[(f, m)] = []
 
     return result
+
+
+def remove_duplicate(seq):
+    for item in seq:
+        temp_lst = []
+        for i in seq[item]:
+            if i not in temp_lst:
+                temp_lst.append(i)
+        seq[item] = temp_lst
+    return seq
+
+
+# seq = {(0, 0): [14, 4, 21, 15, 42, 28, 28, 40, 47, 14, 21, 4, 15, 15, 15, 15, 17, 19, 19], (0, 1): [15, 19, 16, 30, 0, 18, 4, 41], (0, 2): [2, 27, 18, 11, 17], (1, 0): [5, 1, 12, 48, 20, 11, 7, 13, 25], (1, 1): [10, 22, 43, 34, 29, 6], (1, 2): [9,
+#                                                                                                                                                                                                                                                      41, 3]}
+# print(remove_duplicate(seq))

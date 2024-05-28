@@ -101,6 +101,8 @@ def DENH_Dipak(data):
         job_makespan = []  # [ [(f, m), [job_seq], makespan] ]
 
         for item in cp_seq:
+            if job in seq[item]:
+                pass
             temp_seq = deepcopy(cp_seq)
             # print("temp_seq: ", temp_seq)
             if temp_seq[item] == []:
@@ -133,7 +135,7 @@ def DENH_Dipak(data):
                 break
         seq[fm] = job_seq
 
-    return seq
+    return remove_duplicate(seq)
 
 
 seq = DENH_Dipak(data)
