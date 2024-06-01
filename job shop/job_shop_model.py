@@ -383,8 +383,6 @@ def MIP_model(data_address=r"job shop/data.xlsx"):
         for j in N:
             print(f"C{j} =", C[j-1].solution_value())
         
-        for j in N:
-            print(f"D{j} = {D[j-1].solution_value()}")
         
     else:
         print("No solution found.")
@@ -431,5 +429,5 @@ def _2d_lst_to_dict(lst, V):
     return mydict
 
 if __name__ == "__main__":
-    MIP_model("data_small.xlsx")
+    MIP_model("data.xlsx")
 
