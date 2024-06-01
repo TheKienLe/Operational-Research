@@ -28,11 +28,12 @@ def vrp_model():
         return q
 
     # quantity of type p at hospital i
-    q = lst_to_dict(np.array(pd.read_excel("data.xlsx", "coor"))[:, [3, 4]])
+    q = lst_to_dict(np.array(pd.read_excel("data.xlsx", "raw"))[:, [5, 6]])
+    print("Demand", q)
 
     # distance
-    x = np.array(pd.read_excel("data.xlsx", "coor"))[:, 1]
-    y = np.array(pd.read_excel("data.xlsx", "coor"))[:, 2]
+    x = np.array(pd.read_excel("data.xlsx", "raw"))[:, 2]
+    y = np.array(pd.read_excel("data.xlsx", "raw"))[:, 3]
 
     d = dict()
     for i in N:
@@ -41,17 +42,18 @@ def vrp_model():
                 d[(i, j)] = 0  # lol :))
             else:
                 d[(i, j)] = float(
-                    round(math.sqrt((x[i-1] - x[j-1])**2 + (y[i-1] - y[j-1])**2), 2))
-    print(d)
+                    round(math.sqrt((x[i-1] - x[j-1])**2 + (y[i-1] - y[j-1])**2)/9000000, 2))
 
     Q = dict()
     q_temp = np.transpose(
         np.delete(np.array(pd.read_excel("data.xlsx", "capacity")), 0, 1))
-    print(q_temp)
+
     for i in range(len(q_temp[0])):
         for k in K:
             Q[(i+1, k)] = q_temp[k-1][i]
-    print(Q)
+    print("Capacity", Q)
+
+
     solver = pywraplp.Solver.CreateSolver("SCIP")
     if not solver:
         return
@@ -114,12 +116,11 @@ def vrp_model():
 
     # ct7a
     # q_jp --> q_ip
-    # merge two loops
-    for i in NC:
-        for p in P:
-            for k in K:
-                solver.Add(q[(i, p)] <= u[(i, k, p)], "ct7a")
-                solver.Add(u[(i, k, p)] <= Q[(p, k)], "ct7b")
+    # for i in NC:
+    #     for p in P:
+    #         for k in K:
+    #             solver.Add(q[(i, p)] <= u[(i, k, p)], "ct7a")
+    #             solver.Add(u[(i, k, p)] <= Q[(p, k)], "ct7b")
 
     # ct8
     for j in NC:
@@ -142,6 +143,14 @@ def vrp_model():
     # objective function
     solver.Minimize(solver.Sum([d[(i, j)] * x[(i, j, k)]
                     for i in N for j in N for k in K]))
+    
+    # Sets a time limit of 1 hour.
+    solver.SetTimeLimit(10*60*1000)
+
+    # set a minimum gap limit for the integer solution during branch and cut
+    gap = 0.2
+    solverParams = pywraplp.MPSolverParameters()
+    solverParams.SetDoubleParam(solverParams.RELATIVE_MIP_GAP, gap)
 
     print(f"Solving with {solver.SolverVersion()}")
     status = solver.Solve()

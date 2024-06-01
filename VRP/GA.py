@@ -29,7 +29,7 @@ class GA:
         self.travel_dist = instance["travel_dist"]
  
 
-        self.bigM = 1e10
+        self.bigM = 1e16
 
         # GA parameters
         self.pop_size = GA_params["pop_size"]  # population size
@@ -157,9 +157,10 @@ class GA:
             # print("temp_off", temp_off)
             test_route, cost = min_lst(temp_off)
             # print("minlst", min_lst(temp_off))
-            # print("test_route", test_route)
             # print("cost", cost)
             # print("        Test_route:, ", test_route)
+        if len(test_route) == 1:
+            cost = self.bigM
         return join_lst_lst(test_route), cost
 
     # parent type [chromosome, fitness]
@@ -201,8 +202,8 @@ class GA:
                 if route in chromosome1:
                     chromosome1.remove(route)
 
-        print("chromosome1", chromosome1)
-        print("chromosome2", chromosome2)
+        # print("chromosome1", chromosome1)
+        # print("chromosome2", chromosome2)
 
         result.append(self.capacity_constraint(
             chromosome1, parent1[1],join_cross_route(cross_route2)))
@@ -257,8 +258,6 @@ class GA:
             # Create pool
             pool = self.tournament_selection(
                 self.population, tournament_size=self.tour_size, parent_pool_size=self.pop_size)
-            print("pool", pool)
-            print(len(pool))
 
             # population --> {idx: [individual, fittest_score]}
             for i in range(len(self.population) // 2):
@@ -314,12 +313,12 @@ def read_data(url):
     # parameters
 
     # quantity of type p at hospital i
-    q = np.array(pd.read_excel(
-        "data.xlsx", "coor").iloc[:, [3, 4],], dtype=np.float32)
+    q = lst_to_dict(np.array(pd.read_excel("data.xlsx", "raw").iloc[:, [5, 6]], dtype=np.float32) )
+    print("Demand", q)
 
     # distance
-    x = np.array(pd.read_excel("data.xlsx", "coor"))[:, 1]
-    y = np.array(pd.read_excel("data.xlsx", "coor"))[:, 2]
+    x = np.array(pd.read_excel("data.xlsx", "raw"))[:, 2]
+    y = np.array(pd.read_excel("data.xlsx", "raw"))[:, 3]
 
     d = dict()
     for i in range(0, n):
@@ -328,13 +327,14 @@ def read_data(url):
                 d[(i, j)] = 0
             else:
                 d[(i, j)] = float(
-                    round(math.sqrt((x[i-1] - x[j-1])**2 + (y[i-1] - y[j-1])**2), 2))
+                    round(math.sqrt((x[i-1] - x[j-1])**2 + (y[i-1] - y[j-1])**2)/9000000, 2))
 
     # Capacity
     Q = np.transpose(
         np.delete(
             np.array(pd.read_excel("data.xlsx", "capacity"), dtype=np.float32), 0, 1))
     Q = Q.squeeze()
+    print("capacity", Q)
 
     instance = {}
     instance["num_hospital"] = n-1
@@ -350,18 +350,18 @@ def read_data(url):
 if __name__ == "__main__":
 
     GA_params = {
-        "pop_size": 15,
-        "gen_max": 5,
-        "mutate_prob": 0.1,
+        "pop_size": 100,
+        "gen_max": 10,
+        "mutate_prob": 0,
         "cross_rate": 0.5,
-        "tour_size": 2
+        "tour_size": 8
     }
 
     instance = read_data("data.xlsx")
 
     ga = GA(instance, GA_params)
     os.system('cls')
-    print(ga.population)
+    # print(ga.population)
     parent1 = [[0, 5, 3, 6, 0, 7, 0, 1, 2, 0, 4, 0], 324.42999999999995]
     parent2 = [[0, 7, 6, 0, 2, 0, 3, 4, 0, 5, 1, 0], 293.85]
     test = [[0, 1, 0, 4, 6, 7, 0, 4, 2, 0], 100]
@@ -370,7 +370,7 @@ if __name__ == "__main__":
     # print(ga.crossover(parent1, parent2))
     # print(ga.population)
     # print(ga.tournament_selection(ga.population, 10, 100))
-    print(ga.evol())
+    ga.evol()
     print(ga.best_indi)
     # print(ga.capacity_constraint([0, 7, 5, 4, 0], 1e10, [1, 2]))
 
