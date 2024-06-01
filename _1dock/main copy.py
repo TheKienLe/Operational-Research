@@ -33,16 +33,55 @@ def load_instance_data(instance_file):
 
     num_vehicles, num_customers, num_depots = read_parameters(
         instance_file, "Parameters")
+    # with open(instance_file, 'r') as file:
+    #     lines = file.readlines()
+    #     num_vehicles = int(lines[0].split()[1])
+    #     num_customers = int(lines[0].split()[2])
+    #     num_depots = int(lines[0].split()[3])
+    #     customers = []
+    #     depots = []
+    #     vehicles = []
+    #     # Extract vehicle data
+    #     for i in range(1, num_vehicles+1):
+    #         vehicle_data = lines[i].split()
+    #         vehicle = {
+    #             'Max Duration': int(vehicle_data[0]),
+    #             'Max Load': int(vehicle_data[1])
+    #         }
+    #         vehicles.append(vehicle)
 
+    #     # Extract customer data
+    #     for i in range(num_vehicles+1, num_vehicles + num_customers+1):
+    #         customer_data = lines[i].split()
+    #         customer = {
+    #             'index': int(customer_data[0]),
+    #             'x': float(customer_data[1]),
+    #             'y': float(customer_data[2]),
+    #             'service_time': int(customer_data[3]),
+    #             'demand': int(customer_data[4]),
+    #             'ready_time': int(customer_data[-2]),
+    #             'due_time': int(customer_data[-1]),
+    #         }
+    #         customers.append(customer)
+
+    #     # Extract depot data
+    #     for i in range(num_customers+num_vehicles+1, num_vehicles+num_customers+num_depots+1):
+    #         depot_data = lines[i].split()
+    #         depot = {
+    #             'index': int(depot_data[0]),
+    #             'x': float(depot_data[1]),
+    #             'y': float(depot_data[2]),
+    #             'Max Capacity': int(depot_data[-1])
+    #         }
+    #         depots.append(depot)
     customers = read_parameters_data(instance_file, "Customers")
     depots = read_parameters_data(instance_file, "Depots")
     vehicles = read_parameters_data(instance_file, "Vehicles")
 
     return num_vehicles, num_customers, num_depots, customers, depots, vehicles
 
+
 # Generate the distance matrix and travel time matrix
-
-
 def generate_distance_matrix():
     num_nodes = num_customers + num_depots
     distance_matrix = [[0] * num_nodes for _ in range(num_nodes)]
@@ -228,10 +267,10 @@ def generate_initial_population(population_size, num_vehicles, num_customers, cu
 def create_vehicle_sequence(num_vehicles, remaining_customers, customers, depots, vehicles):
     vehicle_sequence = []
     depot_capacity = 1000
+    print(vehicles)
     for vehicle_idx in range(num_vehicles):
-
         depot_idx = vehicle_idx % len(depots)
-        depot_index = depots[depot_idx]['depot']
+        depot_index = depots[depot_idx]['Depot']
         sequence = [depot_index]
         maxLoad = vehicles[vehicle_idx]['Max Load']
         maxDuration = vehicles[vehicle_idx]['Max Duration']
@@ -303,7 +342,7 @@ def tournament_selection(population, fitness_values, tournament_size, threshold)
 def best_cost_route_crossover(parent1, parent2):
 
     # Randomly select a depot
-    depot = random.choice(depots)['depot']
+    depot = random.choice(depots)['index']
     # Randomly select p1,p2 from each parent
     p1 = random.choice(parent1)
     p2 = random.choice(parent2)
@@ -345,11 +384,9 @@ def recreate_vehicle_sequence(newp, remove_route, depot):
         random.shuffle(remaining_customers)
         for route in newp:
             remaining_depots.append(route[0])
-        # depot_info = []
-
-        # for i in remaining_depots:
-        #     # depot_info.append(depots[i-num_customers-1])
-        #     depot_info.append(depots[i-num_customers-1])
+        depot_info = []
+        for i in remaining_depots:
+            depot_info.append(depots[i-num_customers-1])
         # Adjust existing routes by inserting the removed customers
         new_sequence = create_vehicle_sequence(
             num_vehicles, remaining_customers, customers, depot_info, vehicles)
@@ -469,7 +506,7 @@ def genetic_algorithm(instance_file, population_size, num_generations, tournamen
 
     # Step 1: Load instance data
     num_vehicles, num_customers, num_depots, customers, depots,
-    vehicles = load_instance_data(instance_file)[-1]
+    vehicles = load_instance_data(instance_file)
 
     # Step 2: Initialize the population
     population = generate_initial_population(
@@ -542,13 +579,6 @@ def genetic_algorithm(instance_file, population_size, num_generations, tournamen
 instance_file = 'Data.xlsx'
 num_vehicles, num_customers, num_depots, customers, depots, vehicles = load_instance_data(
     instance_file)
-# print(num_vehicles)
-# print(num_customers)
-# print(num_depots)
-# print(customers)
-# print(depots)
-# print(vehicles)
-# print(num_customers)
 distance_matrix, travel_time_matrix = generate_distance_matrix()
 save_distance_matrix(distance_matrix, 'distance_matrix.csv')
 save_travel_time_matrix(travel_time_matrix, 'travel_time_matrix.csv')
