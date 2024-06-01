@@ -87,6 +87,15 @@ def MIP_model(data):
     F = np.squeeze(
             np.array(pd.read_excel(data, "F", index_col=0))
             )
+    
+    # Production cost
+    pc = df_params.iloc[4, 2]
+
+    # Order reject penalty
+    pr = df_params.iloc[5, 2]
+
+    # Order delay penalty
+    pda = df_params.iloc[6, 2]
 
     # decision variable
     # production
@@ -155,16 +164,15 @@ def MIP_model(data):
         solver.Add(tau >= (d[o] + C) - bigM*r_var[o], "ct5")
 
         # 6
-        solver.Add(q[o] * y[o] <= rho[o], "ct6a")
+        solver.Add(q[o] * y[o] <= rho[o] , "ct6a")
         solver.Add(q[o] * x[o] >= rho[o], "ct6b")
 
         # 7
         solver.Add((tau-ls[o]) / (d[o]-ls[o]) - bigM*(1-x[o]) - bigM*y[o] <= rho[o]/q[o], "ct7a")
-        solver.Add(rho[o]/q[o] <= (tau - ls[o]*x[o]) / (d[o] - ls[o]), "ct7b")
+        solver.Add(rho[o]/q[o] <= (tau -ls[o]*x[o]) / (d[o] - ls[o]), "ct7b")
 
         # 8
-
-        solver.Add(solver.Sum([theta[(o, t)] for t in range(ls[o], d[o]+C+1)]) >= x[o], "ct8")
+        solver.Add(solver.Sum([theta[(o, t)] for t in range(ls[o], d[o]+C+1)]) == x[o], "ct8")
 
         # # 9
         solver.Add(solver.Sum([theta[(o, t)] for t in range(d[o], d[o]+C+1)]) >= y[o], "ct9")
@@ -173,7 +181,7 @@ def MIP_model(data):
         solver.Add(bigM*(x[o] - y[o] - 1) + tau <= solver.Sum([t * theta[(o, t)] for t in range(ls[o], d[o]+1)]), "ct10a")
         solver.Add(solver.Sum([t * theta[(o, t)] for t in range(ls[o], d[o])]) <= tau, "ct10b")
 
-    solver.Add(solver.Sum([x[o] - y[o] for o in O]) >= 1, "")
+ 
 
     # 11
     for t in T:
@@ -206,8 +214,8 @@ def MIP_model(data):
             solver.Add(I[(i, t)] <= B[i] * psi[(i, t)], "ct14")
 
     # Objective
-    solver.Minimize(tau/numT * 1 + solver.Sum(
-        [200*r_var[o] + 0.5*solver.Sum(
+    solver.Minimize(tau/numT * pc + solver.Sum(
+        [q[o]*pr*r_var[o] + pda*solver.Sum(
             [(t-d[o]) * theta[(o, t)] for t in range(d[o]+1, numT)]
             ) for o in O]
         ))
@@ -216,13 +224,12 @@ def MIP_model(data):
     print(f"Solving with {solver.SolverVersion()}")
 
     # Sets a time limit of 1 hour.
-    solver.SetTimeLimit(600*1000)
+    solver.SetTimeLimit(10*60*1000)
 
     # set a minimum gap limit for the integer solution during branch and cut
-    gap = 0.1
+    gap = 0.2
     solverParams = pywraplp.MPSolverParameters()
     solverParams.SetDoubleParam(solverParams.RELATIVE_MIP_GAP, gap)
-
 
     status = solver.Solve()
 
@@ -233,7 +240,7 @@ def MIP_model(data):
 
         print(f"tau: {tau.solution_value()}")
         for o in O:
-            print(f"x{o}: {x[o].solution_value()}, y{o}: {y[o].solution_value()}, r{o}: {r_var[o].solution_value()}")
+            print(f"x{o}: {x[o].solution_value()}, r{o}: {r_var[o].solution_value()}, rho{0}: {rho[o].solution_value()}")
 
     else:
         print("No solution found.")
