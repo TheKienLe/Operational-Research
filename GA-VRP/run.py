@@ -34,17 +34,15 @@ def load_instance(file_name):
                     "ready_time": customers["ready_time"][customer_id],
                     "service_time": customers["service_time"][customer_id]}
 
-    coor_data = pd.read_excel(file_name, "customers")[["x", "y"]]
+    coor_data = pd.read_excel(file_name, "distance")
+
+    matrix_size = 50
+
     distance = []
-    x = coor_data["x"]
-    y = coor_data["y"]
-    for i in range(len(coor_data)):
+    for i in range(matrix_size+1):
         row = []
-        for j in range(len(coor_data)):
-            if i == j:
-                row.append(0)
-            else:
-                row.append(((x[i] - x[j])**2 + (y[i] - y[j])**2)**0.5)
+        for j in range(matrix_size + 1):
+            row.append(coor_data[i][j])
         distance.append(row)
 
     instance["distance_matrix"] = distance
