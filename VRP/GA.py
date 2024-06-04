@@ -27,7 +27,9 @@ class GA:
 
         # Travel distance between hospital_i and hospital_j
         self.travel_dist = instance["travel_dist"]
-        print(self.travel_dist)
+ 
+
+        self.bigM = 1e16
 
         # GA parameters
         self.pop_size = GA_params["pop_size"]  # population size
@@ -35,9 +37,11 @@ class GA:
         self.mutate_prob = GA_params["mutate_prob"]  # Probability of mutation
         # percentage of route being crossovered
         self.cross_rate = GA_params["cross_rate"]
+        self.tour_size = GA_params["tour_size"] # tournament size
 
         # Initial population {index = [chromosome, fitness_score]}
         self.population = self.initialize_population(self.pop_size)
+        # print("initial population", self.population)
 
         # Best individual (update after finishing fitness_score function) [chromosome, fitness_score]
         self.best_indi = self.find_best_indi(self.population)
@@ -108,9 +112,12 @@ class GA:
 
     # processed_individual is parent after removing cross route [[1,2], [3, 4]]
     # inserted_node is a list contain # ["I" , "J"]
-    def capacity_constraint(self, processed_individual, inserted_node):
+    def capacity_constraint(self, processed_individual, cost, inserted_node):
         test_route = total_route(processed_individual, 0)
+        cost = self.bigM
         # offspring = []
+        # print("processed_individual", processed_individual)
+        # print("test_route", test_route)
         for isn in inserted_node:
             # print("Inserting: ", isn)
             cp_test_route = test_route.copy()
@@ -119,6 +126,7 @@ class GA:
             for route in cp_test_route:
                 # cp_test_route = test_route.copy()
                 # print("    On route: ", route)
+                # print("route", route)
                 for idx in range(len(route)+1):
                     # print("        Inserting at idx ", idx)
                     cp_route = route.copy()
@@ -136,16 +144,24 @@ class GA:
                     for node in cp_route:
                         # update current capacity
                         current_cap += self.hospital_qty[node]
+                    # print("current_cap", current_cap)
+                    # print("vehicle_cap", self.vehicle_cap)
 
                     if (current_cap <= self.vehicle_cap).all():
                         temp_off.append(
                             [cp_test_route2, self.fittest_score(join_lst_lst(cp_test_route2))])
                     else:
-                        temp_off.append([cp_test_route2, np.inf])
+                        temp_off.append([cp_test_route2, self.bigM])
+                        break
                     # print("        Temp Offspring: ", temp_off)
-            test_route = min_lst(temp_off)
+            # print("temp_off", temp_off)
+            test_route, cost = min_lst(temp_off)
+            # print("minlst", min_lst(temp_off))
+            # print("cost", cost)
             # print("        Test_route:, ", test_route)
-        return join_lst_lst(test_route)
+        if len(test_route) == 1:
+            cost = self.bigM
+        return join_lst_lst(test_route), cost
 
     # parent type [chromosome, fitness]
     def crossover(self, parent1, parent2):
@@ -153,12 +169,22 @@ class GA:
             len(total_route(parent1[0], 0)), len(total_route(parent2[0], 0))])
         num_route_cross = np.floor(
             num_total_route * self.cross_rate).astype(int)  # [2 , 2]
+        # print("num route and cross:", num_total_route, num_route_cross)
 
         parent_route_1 = total_route(parent1[0], 0)
         parent_route_2 = total_route(parent2[0], 0)
+
+        # print("parent_route_1", parent_route_1)
+        # print("parent_route_2", parent_route_2)
+        
         cross_route1 = select_route_cross(
             parent_route_1, num_route_cross[0])  # [[1,2], [3,4]] -> [1,2,3,4]
-        cross_route2 = select_route_cross(parent_route_2, num_route_cross[1])
+        cross_route2 = select_route_cross(
+            parent_route_2, num_route_cross[1])
+
+        # print("cross_route1:", cross_route1)
+        # print("cross_route2:", cross_route2)
+
         result = []  # the place to contain all offsprings
         # print(parent2[0], parent1[0])
         # print(cross_route1, cross_route2)
@@ -176,11 +202,14 @@ class GA:
                 if route in chromosome1:
                     chromosome1.remove(route)
 
-        result.append(self.capacity_constraint(
-            chromosome1, join_cross_route(cross_route2)))
+        # print("chromosome1", chromosome1)
+        # print("chromosome2", chromosome2)
 
         result.append(self.capacity_constraint(
-            chromosome2, join_cross_route(cross_route1)))
+            chromosome1, parent1[1],join_cross_route(cross_route2)))
+
+        result.append(self.capacity_constraint(
+            chromosome2, parent2[1],join_cross_route(cross_route1)))
         return result
 
     # swap
@@ -197,8 +226,8 @@ class GA:
                 selected_route[idx1], selected_route[idx2] = selected_route[idx2], selected_route[idx1]
                 offspring[0] = join_lst_lst(mutation_route)
                 break
-
-        offspring[1] = self.fittest_score(offspring[0])
+        if offspring[1] <= self.bigM:
+            offspring[1] = self.fittest_score(offspring[0])
         return offspring
 
     # inversion
@@ -215,20 +244,20 @@ class GA:
                 offspring[0] = join_lst_lst(mutation_route)
                 break
 
-        offspring[1] = self.fittest_score(offspring[0])
+        if offspring[1] <= self.bigM:
+            offspring[1] = self.fittest_score(offspring[0])
         return offspring
 
     # evolution
     def evol(self):
 
         # loop through all generation
-        for _ in range(self.gen_max):
+        for gen in range(self.gen_max):
+            print("gen", gen)
             new_population = dict()  # []
             # Create pool
             pool = self.tournament_selection(
-                self.population, tournament_size=50, parent_pool_size=100)
-            print(pool)
-            print(len(pool))
+                self.population, tournament_size=self.tour_size, parent_pool_size=self.pop_size)
 
             # population --> {idx: [individual, fittest_score]}
             for i in range(len(self.population) // 2):
@@ -236,14 +265,18 @@ class GA:
                 idx2 = 2*i+1
 
                 # select parent
-                parent1 = self.population[idx1]
-                parent2 = self.population[idx2]
+                parent1 = self.population[pool[idx1]]
+                parent2 = self.population[pool[idx2]]
+                # print("parent1", parent1)
+                # print("parent2", parent2)
 
                 # crossover
-                off1, off2 = self.crossover(parent1, parent2)
-                off1 = [off1, self.fittest_score(off1)]
-                off2 = [off2, self.fittest_score(off2)]
-
+                [route1, cost1], [route2, cost2] = self.crossover(parent1, parent2)
+                off1 = [route1, cost1]
+                off2 = [route2, cost2]
+                # print("off1", off1)
+                # print("off2", off2)
+                
                 # mutation
                 # random in [0, 1]
                 # swap_rate = 0.05, inversion_rate = 0.05 --> rate
@@ -258,8 +291,10 @@ class GA:
 
                 new_population[idx1] = off1
                 new_population[idx2] = off2
-            self.population = new_population
-            print(self.population)
+            new_population = add_key_dict(new_population, self.pop_size)
+            self.population.update(new_population)
+            self.population = sort_population(self.population, self.pop_size)
+            self.best_indi = self.population[0]
         return self.population
 
 
@@ -278,12 +313,12 @@ def read_data(url):
     # parameters
 
     # quantity of type p at hospital i
-    q = np.array(pd.read_excel(
-        "data.xlsx", "coor").iloc[:, [3, 4],], dtype=np.float32)
+    q = lst_to_dict(np.array(pd.read_excel("data.xlsx", "raw").iloc[:, [5, 6]], dtype=np.float32) )
+    print("Demand", q)
 
     # distance
-    x = np.array(pd.read_excel("data.xlsx", "coor"))[:, 1]
-    y = np.array(pd.read_excel("data.xlsx", "coor"))[:, 2]
+    x = np.array(pd.read_excel("data.xlsx", "raw"))[:, 2]
+    y = np.array(pd.read_excel("data.xlsx", "raw"))[:, 3]
 
     d = dict()
     for i in range(0, n):
@@ -292,13 +327,14 @@ def read_data(url):
                 d[(i, j)] = 0
             else:
                 d[(i, j)] = float(
-                    round(math.sqrt((x[i-1] - x[j-1])**2 + (y[i-1] - y[j-1])**2), 2))
+                    round(math.sqrt((x[i-1] - x[j-1])**2 + (y[i-1] - y[j-1])**2)/9000000, 2))
 
     # Capacity
     Q = np.transpose(
         np.delete(
             np.array(pd.read_excel("data.xlsx", "capacity"), dtype=np.float32), 0, 1))
     Q = Q.squeeze()
+    print("capacity", Q)
 
     instance = {}
     instance["num_hospital"] = n-1
@@ -315,9 +351,10 @@ if __name__ == "__main__":
 
     GA_params = {
         "pop_size": 100,
-        "gen_max": 50,
-        "mutate_prob": 0.1,
+        "gen_max": 10,
+        "mutate_prob": 0,
         "cross_rate": 0.5,
+        "tour_size": 8
     }
 
     instance = read_data("data.xlsx")
@@ -332,5 +369,8 @@ if __name__ == "__main__":
     # print(ga.evol())
     # print(ga.crossover(parent1, parent2))
     # print(ga.population)
-    print(ga.tournament_selection(ga.population, 10, 100))
-    print(ga.evol())
+    # print(ga.tournament_selection(ga.population, 10, 100))
+    ga.evol()
+    print(ga.best_indi)
+    # print(ga.capacity_constraint([0, 7, 5, 4, 0], 1e10, [1, 2]))
+

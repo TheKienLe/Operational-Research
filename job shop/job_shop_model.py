@@ -22,12 +22,12 @@ def MIP_model(data_address=r"job shop/data.xlsx"):
     M = range(1, m+1)
     V = range(1, v+1)
 
-    # parameter
+    # Parameter
     # unit processing cost on machine m per unit of time
     lamda = np.transpose(np.delete(np.array(pd.read_excel(
         data_address, "machine_cost")), 0, 1))[0]
 
-    # fixed cost of vihecle type v
+    # fixed cost of vehicle type v
     F = np.transpose(np.delete(np.array(pd.read_excel(
         data_address, "vehicle_cost")), 0, 1))[0]
 
@@ -62,7 +62,7 @@ def MIP_model(data_address=r"job shop/data.xlsx"):
 
     # delivery time window of job j
     tw = np.array(pd.read_excel(
-        data_address, "delivery_time_window"))
+        data_address, "delivery_time_window"))[:,1:]
 
     # capacity of vehicle v
     q = np.transpose(
@@ -156,7 +156,6 @@ def MIP_model(data_address=r"job shop/data.xlsx"):
     ## Constraint
     
     # 3
-    # Fix Sum constrant
     for j in N:
         for r in R:
                 solver.Add(solver.Sum([X[(j, r, m)] for m in M]) == 1, "ct3")
@@ -169,8 +168,6 @@ def MIP_model(data_address=r"job shop/data.xlsx"):
 
 
     # 5
-    # fIX  P[0] with P[N+1]
-    # fix sum constraint
     for i in N:
         for f in R:
             for m in M:
@@ -186,7 +183,6 @@ def MIP_model(data_address=r"job shop/data.xlsx"):
             [Y[(i,f,j,r,m)] for i in N_minus for f in R]), "ct6")
     
     # 7 Linear max
-    # Linearize binary * continuous
     bc7 = {}
     for i in N:
         for f in R:
@@ -202,7 +198,7 @@ def MIP_model(data_address=r"job shop/data.xlsx"):
     for j in N:
         for r in R_minus:
             solver.Add(pi[(j, r)] >= gamma[(j,r-1)])
-            # solver.Add(pi[(j, r)] <= gamma[(j,r-1)] + bigM*z7[(j, r, 0)])
+            solver.Add(pi[(j, r)  ] <= gamma[(j,r-1)] + bigM*z7[(j, r, 0)])
 
             for i in N:
                 for f in R:
@@ -211,8 +207,6 @@ def MIP_model(data_address=r"job shop/data.xlsx"):
                         solver.Add(bc7[(i, f, m)] <= gamma[(i,f)] + bigM*(1-Y[(i, f, j, r, m)]))
                         solver.Add(bc7[(i, f, m)] >= gamma[(i,f)] - bigM*(1-Y[(i, f, j, r, m)]))
             solver.Add(pi[(j, r)] >= solver.Sum([bc7[(i, f, m)] for i in N for f in R for m in M]))
-
-    # missing constraint 5
 
     # 8
     for j in N:
@@ -315,7 +309,7 @@ def MIP_model(data_address=r"job shop/data.xlsx"):
     
     for j in N:
         for v in V:
-            solver.Add(bc19[(j,v)] <= bigM * Z[j,v])
+            solver.Add(bc19[(j,v)] <= Z[j,v])
             solver.Add(bc19[(j,v)] <= T[(j,v)] + bigM*(1-Z[j,v]))
             solver.Add(bc19[(j,v)] >= T[(j,v)] - bigM*(1-Z[j,v]))
 
@@ -340,9 +334,41 @@ def MIP_model(data_address=r"job shop/data.xlsx"):
             solver.Add(W[v-1] <= Z[(j, v)] + bigM*z21[(v, j)])
 
         solver.Add(solver.Sum([z21[(v, j)] for j in N]) <= n - 1)
+
+    # 22 Max constraint for obj2
     
-# Objective
-    solver.Minimize(solver.Sum(lamda[m-1] * P[(j, r, m)] * X[(j, r, m)] for j in N for r in R for m in M))
+    ## Finish time
+    max_fin = [0] * len(N)
+    for j in N:
+        max_fin[j-1] = solver.NumVar(0, bigM, "")
+    
+    for j in N:
+        solver.Add(max_fin[j-1] >= D[j-1] - tw[j-1, 1], "")
+   
+    
+    ## Beginning time
+    max_beg = [0] * len(N)
+    for j in N:
+        max_beg[j-1] = solver.NumVar(0, bigM, "")
+    
+    for j in N:
+        solver.Add(max_beg[j-1] >= tw[j-1, 0] - D[j-1], "")
+    
+
+    
+    # Objective
+    obj1 = solver.Sum(lamda[m-1] * P[(j, r, m)] * X[(j, r, m)] for j in N for r in R for m in M)\
+                + solver.Sum([F[v-1]*W[v-1] + Theta[v-1]*(E[v-1] - S[v-1]) for v in V])
+    obj2 = fei * solver.Sum([max_fin[j-1] for j in N])\
+                + mu * solver.Sum([max_beg[j-1] for j in N])
+
+
+    # Flow control
+
+    ## Step1: Find trade-off table
+
+    ### First objective
+    solver.Minimize(obj1)
 
     # Solve
     print(f"Solving with {solver.SolverVersion()}")
@@ -352,38 +378,40 @@ def MIP_model(data_address=r"job shop/data.xlsx"):
     
     if status == pywraplp.Solver.OPTIMAL or status == pywraplp.Solver.FEASIBLE:
         print(f"Total cost = {solver.Objective().Value()}\n")
+        obj1_best = solver.Objective().Value()
 
         for j in N:
             print(f"C{j} =", C[j-1].solution_value())
         
-        # for f in R:
-        #     for j in N_full:
-        #         for r in R:
-        #             for m in M:
-        #                 print(f"C{0, f, j, r, m} =", Y[(0, f, j, r, m)].solution_value())
-
-        # for i in self.N:
-        #     for f in self.F:
-        #         print("y =", self.Y[(i, f)].solution_value())
-
-        # for i in self.N:
-        #     for k in self.lambda_dict[i]:
-        #         for j in self.E_dict[k]:
-        #             print(f"x{i,j,k} =", self.X[(i,j,k)].solution_value())
-        # 
-        # print("y =", self.Y.solution_value())
+        
     else:
         print("No solution found.")
 
-    # 11
-    total6 = 0
-    for i in N:
-        for f in R:
-            for r in R:
-                for m in M:
-                    total6 += Y[(i, f, r, r, m)]
-    solver.Add(total6 == 1)
+    
+    # Bound the first obj
+    ct_obj1 = obj1 == obj1_best
+    solver.Add(ct_obj1)
+    solver.Minimize(obj2)
 
+    # Solve
+    print(f"Solving with {solver.SolverVersion()}")
+    status = solver.Solve()
+
+    # Print solution.
+    if status == pywraplp.Solver.OPTIMAL or status == pywraplp.Solver.FEASIBLE:
+        print(f"Total cost = {solver.Objective().Value()}\n")
+        obj1_best = solver.Objective().Value()
+
+        for j in N:
+            for r in R:
+                print(f"pi{j, r} = {pi[j, r].solution_value()}, gamma{j, r} = {gamma[j, r].solution_value()}")
+        
+        for j in N:
+            print(f"D{j} = {D[j-1].solution_value()}")
+
+
+    else:
+        print("No solution found.")
 
 def lst_to_dict(lst):
     mydict = dict()

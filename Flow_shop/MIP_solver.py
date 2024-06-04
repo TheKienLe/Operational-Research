@@ -1,6 +1,7 @@
 from ortools.linear_solver import pywraplp
 import pandas as pd
 import numpy as np
+from utils import *
 
 class MIP_model():
     def __init__(self, dataset, mip_solver="SCIP"):
@@ -87,23 +88,6 @@ class MIP_model():
             for h in self.lambda_dict[i]:
                 for k in self.lambda_dict[i]:
                    self.W[(i, h, k)] = self.solver.IntVar(0, 1, "") 
-
-
-
-    def arr_to_dict(self, arr):
-        dict = {}
-        for key, value in arr:
-            if key in dict:
-                dict[key].append(value)
-            else:
-                dict[key] = [value]
-
-        return dict
-
-
-    def intersect(self, list1, list2):
-        return list(set(list1).intersection(set(list2)))
-
 
     def solve(self):
         
