@@ -17,11 +17,14 @@ class MIP_model():
         # Total number of factory
         self.f = parameter.iloc[2,2]
 
+        # Number of parallel machine at stage k
+        self.m = parameter.iloc[3,2]
 
         ## Range 
         self.N = range(self.n)
         self.S = range(self.s)
         self.F = range(self.f)
+        self.M = range(self.m)
 
 
         ## Parameter
@@ -32,20 +35,15 @@ class MIP_model():
 
         # Set of stages accessed by job
         lambda_arr = np.array(pd.read_excel("data.xlsx", "lambda"))
-        self.lambda_dict = self.arr_to_dict(lambda_arr)
+        # self.lambda_dict = arr_to_dict(lambda_arr)
+        self.lambda_dict = { job:list(self.S) for job in self.N }
 
         # Set of parallel machine at stage k 
         E_arr = np.array(pd.read_excel("data.xlsx", "E"))
-        self.E_dict = self.arr_to_dict(E_arr)
-
-        # Number of parallel machine at stage k
-        self.m = np.squeeze(
-            np.array(pd.read_excel("data.xlsx", "m", index_col=0))
-            )
+        self.E_dict = { job:list(self.M) for job in self.N }
         
         # Large number
         self.L = 1000000000
-        
 
         ## Solver
         # Create the mip solver with the SCIP backend.
@@ -79,14 +77,14 @@ class MIP_model():
         self.Z = {}  
         for i in self.N:
             for l in self.N:
-                for k in self.intersect(self.lambda_dict[i], self.lambda_dict[l]):
+                for k in intersect(self.lambda_dict[i], self.lambda_dict[l]):
                     self.Z[(i, l, k)] = self.solver.IntVar(0, 1, "")
 
         # W_ihk if job immediately after its completion at stage j is to be processed at stage h l
         self.W = {}
         for i in self.N:
             for h in self.lambda_dict[i]:
-                for k in self.lambda_dict[i]:
+                for k in intersect(self.lambda_dict[i], self.lambda_dict[l]):
                    self.W[(i, h, k)] = self.solver.IntVar(0, 1, "") 
 
     def solve(self):
@@ -124,7 +122,7 @@ class MIP_model():
         for i in self.N:
             for l in self.N:
                 if i != l:
-                    for k in self.intersect(self.lambda_dict[i], self.lambda_dict[l]):
+                    for k in intersect(self.lambda_dict[i], self.lambda_dict[l]):
                         self.solver.Add(
                             self.Z[(l,i,k)] + self.Z[(i,l,k)] <= 1,
                         "ct4")
@@ -134,7 +132,7 @@ class MIP_model():
         for i in self.N:
             for l in self.N:
                 if i != l:
-                    for k in self.intersect(self.lambda_dict[i], self.lambda_dict[l]):
+                    for k in intersect(self.lambda_dict[i], self.lambda_dict[l]):
                         for j in self.E_dict[k]:
                             for f in self.F:
                                 self.solver.Add(
@@ -162,20 +160,28 @@ class MIP_model():
         if status == pywraplp.Solver.OPTIMAL or status == pywraplp.Solver.FEASIBLE:
             print(f"Total makespan = {self.solver.Objective().Value()}\n")
 
-            # for i in self.N:
-            #     for k in self.lambda_dict[i]:
-            #         print(f"s{i,k} =", self.s[(i, k)].solution_value() + self.p[i,k])
+            for i in self.N:
+                for k in self.lambda_dict[i]:
+                    print("s",i,k, self.s[(i, k)].solution_value() + self.p[i,k])
 
-            # for i in self.N:
-            #     for f in self.F:
-            #         print("y =", self.Y[(i, f)].solution_value())
+            for i in self.N:
+                for f in self.F:
+                    print("y",i,f,self.Y[(i, f)].solution_value())
 
-            # for i in self.N:
-            #     for k in self.lambda_dict[i]:
-            #         for j in self.E_dict[k]:
-            #             print(f"x{i,j,k} =", self.X[(i,j,k)].solution_value())
-            # 
-            # print("y =", self.Y.solution_value())
+            for i in self.N:
+                for k in self.lambda_dict[i]:
+                    for j in self.E_dict[k]:
+                        print("x",i,j,k, self.X[(i,j,k)].solution_value())
+
+            for i in self.N:
+                for l in self.N:
+                    for k in intersect(self.lambda_dict[i], self.lambda_dict[l]):
+                        print("z",i,l,k,self.Z[(i,l,k)].solution_value())
+
+            for i in self.N:
+                for h in self.lambda_dict[i]:
+                    for k in intersect(self.lambda_dict[i], self.lambda_dict[l]):
+                        print(f"w",i,h,k,self.W[(i,h,k)].solution_value())
         else:
             print("No solution found.")
 

@@ -14,7 +14,8 @@ def read_data(file_name):
     K = pd.read_excel(file_name, "Parameters").iloc[1, 2]
 
     # number of paralell machine at stage k {stage: qty}
-    Mk = summary_df(pd.read_excel(file_name, "E"), "Stage")
+    M = pd.read_excel(file_name, "Parameters").iloc[3, 2]
+    Mk = { job:M for job in range(N) }
 
     # processing time of job i at stage k {(job, stage): time}
     p = distance_dict(pd.read_excel(file_name, "p"))
@@ -121,6 +122,11 @@ def DENH_Dipak(data):
                     temp_seq[item].pop(i)
 
         min_value = job_makespan[0][2]
+        # if job == job_ord[-1]:
+        #     print("job_makespan")
+        #     print(job_makespan)
+        #     print()
+        #     print(job_makespan[0][2])
 
         for i in range(len(job_makespan)):
             if job_makespan[i][2] < min_value:
@@ -135,9 +141,13 @@ def DENH_Dipak(data):
                 break
         seq[fm] = job_seq
 
-    return remove_duplicate(seq)
+    return min_value, remove_duplicate(seq)
 
 
-seq = DENH_Dipak(data)
-print(seq)
-print(total_make_span(data, seq))
+make_span, seq = DENH_Dipak(data)
+
+print("Stage_0_Sequence[F,M]", seq)
+print()
+total_seq = total_make_span(data, seq)[1]
+print("Total_seq", total_seq)
+print("Total make span = ", make_span)

@@ -203,12 +203,12 @@ def MIP_model(data):
                        <= t * H[r] * U[r] * 2, "ct12")
 
 
-    # # 13
+    # 13
     for r in R:
         solver.Add(solver.Sum([s[i]*psi[(i, numT-1)] + p[i]*I[(i, numT-1)] for i in Pr[r]])
                    >= H[r] * U[r], "ct13")
 
-    # # 14
+    # 14
     for t in T:
         for i in P:
             solver.Add(I[(i, t)] <= B[i] * psi[(i, t)], "ct14")
@@ -240,7 +240,9 @@ def MIP_model(data):
 
         print(f"tau: {tau.solution_value()}")
         for o in O:
-            print(f"x{o}: {x[o].solution_value()}, r{o}: {r_var[o].solution_value()}, rho{0}: {rho[o].solution_value()}")
+            for t in T:
+                if theta[(o, t)].solution_value() == 1:
+                    print(f"x{o}: {x[o].solution_value()}, r{o}: {r_var[o].solution_value()}, rho{o}: {rho[o].solution_value()}, theta{o, t}: 1")
 
     else:
         print("No solution found.")

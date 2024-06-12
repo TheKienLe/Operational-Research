@@ -1,6 +1,18 @@
-
 from copy import deepcopy
 
+def arr_to_dict(arr):
+        dict = {}
+        for key, value in arr:
+            if key in dict:
+                dict[key].append(value)
+            else:
+                dict[key] = [value]
+
+        return dict
+
+
+def intersect(list1, list2):
+    return list(set(list1).intersection(set(list2)))
 
 def distance_dict(df):
     result = dict()
@@ -167,4 +179,3 @@ def remove_duplicate(seq):
 # seq = {(0, 0): [14, 4, 21, 15, 42, 28, 28, 40, 47, 14, 21, 4, 15, 15, 15, 15, 17, 19, 19], (0, 1): [15, 19, 16, 30, 0, 18, 4, 41], (0, 2): [2, 27, 18, 11, 17], (1, 0): [5, 1, 12, 48, 20, 11, 7, 13, 25], (1, 1): [10, 22, 43, 34, 29, 6], (1, 2): [9,
 #                                                                                                                                                                                                                                                      41, 3]}
 # print(remove_duplicate(seq))
->>>>>>> 1b76cfe2241f2f4869bb21eea19fcea2b93f8bff
