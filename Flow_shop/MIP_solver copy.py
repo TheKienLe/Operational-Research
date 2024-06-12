@@ -1,7 +1,6 @@
 from ortools.linear_solver import pywraplp
 import pandas as pd
 import numpy as np
-import time
 from utils import *
 
 class MIP_model():
@@ -151,49 +150,43 @@ class MIP_model():
 
         # Objective
         self.solver.Minimize(self.f)
+
+        # Solve
+        print(f"Solving with {self.solver.SolverVersion()}")
+        status = self.solver.Solve()
+
+        # Print solution.
         
-        # open file for write ouput
-        with open("output.txt", "w") as file:
-            # Solve
-            file.write(f"Solving with {self.solver.SolverVersion()}\n")
-            status = self.solver.Solve()
+        if status == pywraplp.Solver.OPTIMAL or status == pywraplp.Solver.FEASIBLE:
+            print(f"Total makespan = {self.solver.Objective().Value()}\n")
 
-            # Print solution.
-            if status == pywraplp.Solver.OPTIMAL or status == pywraplp.Solver.FEASIBLE:
-                file.write(f"Total makespan = {self.solver.Objective().Value()}\n")
+            for i in self.N:
+                for k in self.lambda_dict[i]:
+                    print("s",i,k, self.s[(i, k)].solution_value() + self.p[i,k])
 
-                for i in self.N:
-                    for k in self.lambda_dict[i]:
-                        file.write(f"s {i} {k} {self.s[(i, k)].solution_value() + self.p[i,k]}\n")
+            for i in self.N:
+                for f in self.F:
+                    print("y",i,f,self.Y[(i, f)].solution_value())
 
-                for i in self.N:
-                    for f in self.F:
-                        file.write(f"y {i} {f} {self.Y[(i, f)].solution_value()}\n")
+            for i in self.N:
+                for k in self.lambda_dict[i]:
+                    for j in self.E_dict[k]:
+                        print("x",i,j,k, self.X[(i,j,k)].solution_value())
 
-                for i in self.N:
-                    for k in self.lambda_dict[i]:
-                        for j in self.E_dict[k]:
-                            file.write(f"x {i} {j} {k} {self.X[(i,j,k)].solution_value()}\n")
+            for i in self.N:
+                for l in self.N:
+                    for k in intersect(self.lambda_dict[i], self.lambda_dict[l]):
+                        print("z",i,l,k,self.Z[(i,l,k)].solution_value())
 
-                for i in self.N:
-                    for l in self.N:
-                        for k in intersect(self.lambda_dict[i], self.lambda_dict[l]):
-                            file.write(f"z {i} {l} {k} {self.Z[(i,l,k)].solution_value()}\n")
-
-                for i in self.N:
-                    for h in self.lambda_dict[i]:
-                        for k in intersect(self.lambda_dict[i], self.lambda_dict[l]):
-                            file.write(f"w {i} {h} {k} {self.W[(i,h,k)].solution_value()}\n")
-            else:
-                print("No solution found.")
-        print("Finished!!!")
+            for i in self.N:
+                for h in self.lambda_dict[i]:
+                    for k in intersect(self.lambda_dict[i], self.lambda_dict[l]):
+                        print(f"w",i,h,k,self.W[(i,h,k)].solution_value())
+        else:
+            print("No solution found.")
 
 if __name__ == "__main__":
-    start = time.time()
     dataset = "data.xlsx"
     model = MIP_model(dataset, mip_solver="SCIP")
     model.solve()
-    end = time.time()
-    print(f"Executed in {(end - start)}s")
-
 
