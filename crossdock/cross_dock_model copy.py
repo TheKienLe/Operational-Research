@@ -148,24 +148,21 @@ def cross_dock_model(name):
     solverParams = pywraplp.MPSolverParameters()
     solverParams.SetDoubleParam(solverParams.RELATIVE_MIP_GAP, gap)
 
-    with open("output.txt", "w") as file:
-        # solve
-        file.write(f"Solving with {solver.SolverVersion()}\n")
-        status = solver.Solve()
+    # solve
+    print(f"Solving with {solver.SolverVersion()}")
+    status = solver.Solve()
 
-        if status == pywraplp.Solver.OPTIMAL or status == pywraplp.Solver.FEASIBLE:
-            file.write(f"Minimum distance {solver.Objective().Value()}\n")
-            for cl in CL: 
-                file.write(f"{NV[cl]}: {NV["cl" + str(cl)].solution_value()}\n")
-            for s in S:
-                for f in F:
-                    if x[("s" + str(s), "f" + str(f))].solution_value() == 1:
-                        file.write(f"x{s, f}: 1")
+    if status == pywraplp.Solver.OPTIMAL or status == pywraplp.Solver.FEASIBLE:
+        print(f"Minimum distance {solver.Objective().Value()}")
+        for cl in CL: 
+            print(f"NV{cl}:", NV["cl" + str(cl)].solution_value())
+        for s in S:
+            for f in F:
+                if x[("s" + str(s), "f" + str(f))].solution_value() == 1:
+                    print(f"x{s, f}:", 1)
 
-        else:
-            print("No solution")
-    
-     print("Process finished, please check output.txt!")
+    else:
+        print("No solution")
 
 
 if __name__ == "__main__":
