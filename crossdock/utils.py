@@ -1,3 +1,5 @@
+import itertools
+
 def df_to_list(df, *args):
     result = dict()
     for i in df.index:
@@ -11,11 +13,12 @@ def df_to_list(df, *args):
     return result
 
 
-def summary_df(df):
+def summary_df(df, f):
     result = dict()
     for key, value in df:
         if key in result:
             result[key].append(value)
         else:
             result[key] = [value]
+    result = dict(itertools.islice(result.items(), f))
     return result

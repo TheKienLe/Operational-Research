@@ -1,20 +1,21 @@
 from ortools.linear_solver import pywraplp
 import pandas as pd
 from utils import *
+import itertools
 
 
 def cross_dock_model(name):
 
     # index & subset
     parameter = pd.read_excel(name, "parameter")
-    f = parameter.iloc[0, 1]
+    fl = parameter.iloc[0, 1]
     s = parameter.iloc[1, 1]
     cl = parameter.iloc[2, 1]
     hs = parameter.iloc[3, 1]
     ls = parameter.iloc[4, 1]
 
     # set
-    F = range(0, f)
+    F = range(0, fl)
     S = range(0, s)
     CL = range(0, cl)
     HS = range(0, hs)
@@ -24,40 +25,40 @@ def cross_dock_model(name):
     # floor capacity
     cap = df_to_list(pd.read_excel(
         name, "location_floor_cluster"), "floor", "cap")
-    print("floor cap:", cap)
+    # print("floor cap:", cap)
 
     # location each floor in each cluster
     y = df_to_list(pd.read_excel(name, "location_floor_cluster"),
                    "cluster", "floor", "allocation_in_cluster")
-    print("cluster location", y)
+    # print("cluster location", y)
 
     # distance from floor to shipping point
     distS = df_to_list(pd.read_excel(
         name, "distance_floor_shipping"), "floor", "distance")
-    print("floor distance", distS)
+    # print("floor distance", distS)
 
     # distance picking carton in cluster
     distPcb = df_to_list(pd.read_excel(name, "distance_cluster").query(
         "type == 'carton'"), "cluster", "distance")
-    print("Distance carton", distPcb)
+    # print("Distance carton", distPcb)
 
     # distance picking plastic in cluster
     distPpb = df_to_list(pd.read_excel(name, "distance_cluster").query(
         "type == 'plastic'"), "cluster", "distance")
-    print("Distance plastic", distPpb)
+    # print("Distance plastic", distPpb)
     
     # number of pallets shipped to store s within 24 hrs
     PS = df_to_list(pd.read_excel(name, "demand"), "store", "shipped")
-    print("Num pallet shipped", PS)
+    # print("Num pallet shipped", PS)
 
     # requirement number of pallets store s for within 24 hrs
     D = df_to_list(pd.read_excel(name, "demand"), "store", "demand")
-    print("Store Demand", D)
+    # print("Store Demand", D)
 
     # space requirement of store s for 24 hrs
     R = df_to_list(pd.read_excel(name, "demand"), "store", "floor_unit")
-    print("R:", R)
-    print("space requirement", R)
+    # print("R:", R)
+    # print("space requirement", R)
 
     # percentage plastic boxes picked compared to total box in 24 hrs
     ppb = 0.5
@@ -91,7 +92,10 @@ def cross_dock_model(name):
     # constraint
     # 3
 
-    sumry = summary_df(y)
+    sumry = summary_df(y, int(fl/10))
+    print("fl", fl)
+    print("sumry", sumry)
+    print("cl", cl)
     for s in S:
         for cl in CL:
             for f in sumry["cl" + str(cl)]:
@@ -135,16 +139,24 @@ def cross_dock_model(name):
     #                        x[("s" + str(s), "f" + str(f+1))] + x[("s" + str(s), "f" + str(f-1))])
 
     # objective func
-    objective = solver.Sum(
-        distPcb["cl" + str(cl)] * NV["cl" + str(cl)] * (1-ppb) + distPpb["cl" + str(cl)] * NV["cl" + str(cl)] * ppb for cl in CL)\
-    + solver.Sum(distS["f" + str(f)] * x[("s" + str(s), "f" + str(f))] * PS["s" + str(s)] for f in F for s in S)
+    PickDist = solver.NumVar(0, solver.infinity(), "")
+    ShipDist = solver.NumVar(0, solver.infinity(), "")
+
+    obj_PickDist = solver.Add(PickDist == solver.Sum(
+        distPcb["cl" + str(cl)] * NV["cl" + str(cl)] * (1-ppb) + distPpb["cl" + str(cl)] * NV["cl" + str(cl)] * ppb for cl in CL))
+
+    obj_ShipDist = solver.Add(ShipDist == solver.Sum(
+        distS["f" + str(f)] * x[("s" + str(s), "f" + str(f))] * PS["s" + str(s)] for f in F for s in S))
+
+    objective = PickDist + ShipDist
+  
     solver.Minimize(objective)
 
     # Sets a time limit of 1 hour.
     solver.SetTimeLimit(10*60*1000)
 
     # set a minimum gap limit for the integer solution during branch and cut
-    gap = 0.15
+    gap = 0.05
     solverParams = pywraplp.MPSolverParameters()
     solverParams.SetDoubleParam(solverParams.RELATIVE_MIP_GAP, gap)
 
@@ -154,12 +166,13 @@ def cross_dock_model(name):
 
     if status == pywraplp.Solver.OPTIMAL or status == pywraplp.Solver.FEASIBLE:
         print(f"Minimum distance {solver.Objective().Value()}")
+        print(f"Picking distance {PickDist.solution_value()}")
+        print(f"Shipping distance {ShipDist.solution_value()}")
         for cl in CL: 
-            print(f"NV{cl}:", NV["cl" + str(cl)].solution_value())
+            print(f"NV{cl}", NV["cl" + str(cl)].solution_value())
         for s in S:
             for f in F:
-                if x[("s" + str(s), "f" + str(f))].solution_value() == 1:
-                    print(f"x{s, f}:", 1)
+                    print("x", s, f, x[("s" + str(s), "f" + str(f))].solution_value())
 
     else:
         print("No solution")
