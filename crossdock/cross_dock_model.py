@@ -156,7 +156,7 @@ def cross_dock_model(name):
         if status == pywraplp.Solver.OPTIMAL or status == pywraplp.Solver.FEASIBLE:
             file.write(f"Minimum distance {solver.Objective().Value()}\n")
             for cl in CL: 
-                file.write(f"{NV[cl]}: {NV["cl" + str(cl)].solution_value()}\n")
+                file.write(f"NV{cl}: {NV['cl' + str(cl)].solution_value()}\n")
             for s in S:
                 for f in F:
                     if x[("s" + str(s), "f" + str(f))].solution_value() == 1:
@@ -165,7 +165,7 @@ def cross_dock_model(name):
         else:
             print("No solution")
     
-     print("Process finished, please check output.txt!")
+    print("Process finished, please check output.txt!")
 
 
 if __name__ == "__main__":
