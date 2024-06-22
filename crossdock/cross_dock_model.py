@@ -160,7 +160,7 @@ def cross_dock_model(name):
             for s in S:
                 for f in F:
                     if x[("s" + str(s), "f" + str(f))].solution_value() == 1:
-                        file.write(f"x{s, f}: 1")
+                        file.write(f"x{s, f}: 1\n")
 
         else:
             print("No solution")
