@@ -26,5 +26,5 @@ file_name = "./data/instance.xlsx"
 #             row.append(((x[i] - x[j])**2 + (y[i] - y[j])**2)**0.5)
 #     distance.append(row)
 
-print(len(distance))
+# print(len(distance))
 
