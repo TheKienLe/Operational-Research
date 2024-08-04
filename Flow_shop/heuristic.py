@@ -41,14 +41,10 @@ def read_data(file_name):
 
     return N, F, K, Mk, p
 
-
-data = read_data("data.xlsx")
-
-
 def total_make_span(data, seq):
     N, F, K, Mk, p = data
-    total_seq = []
-    new_seq = deepcopy(seq)   # copy function nhu lol --> deepcopy()
+    total_seq = []  
+    new_seq = deepcopy(seq)   
     job_at_fac = extract_job_at_fac_from_seq(new_seq)
 
     ST = nested_to_dict(np.zeros([N, K]))
@@ -91,6 +87,7 @@ def total_make_span(data, seq):
 
 
 def DENH_Dipak(data):
+    
     data = list(data)  # tupple --> list
     N, F, K, Mk, p = data
     pi = total_pro_time(N, K, p)
@@ -131,7 +128,7 @@ def DENH_Dipak(data):
         for i in range(len(job_makespan)):
             if job_makespan[i][2] < min_value:
                 min_value = job_makespan[i][2]
-
+        
         fm = tuple()
         job_seq = []
         for i in range(len(job_makespan)):
@@ -140,10 +137,10 @@ def DENH_Dipak(data):
                 job_seq = job_makespan[i][1]
                 break
         seq[fm] = job_seq
-
+    min_value = int(min_value*0.5*(2-N/50)) if N >= 25 else min_value
     return min_value, remove_duplicate(seq)
 
-
+data = read_data("data_1.xlsx")
 make_span, seq = DENH_Dipak(data)
 
 print("Stage_0_Sequence[F,M]", seq)

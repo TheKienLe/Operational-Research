@@ -1,0 +1,19 @@
+0,O,M Train,M Train,N Train,N Train,O,A Train,A Train,O,M Train,M Train,N Train,N Train,O,A Train,A Train,O,M Train,M Train,N Train,N Train,O,A Train,A Train,O,M Train,M Train,N Train,N Train,O,A Train
+1,O,M Pax,M Pax,N Pax,N Pax,O,A Pax,A Pax,O,M Pax,M Pax,N Pax,N Pax,O,A Pax,A Pax,O,M Pax,M Pax,N Pax,N Pax,O,A Pax,A Pax,O,M Pax,M Pax,N Pax,N Pax,O,A Pax
+2,O,M Train,M Train,N Train,N Train,O,A Train,A Train,O,M Train,M Train,N Train,N Train,O,A Train,A Train,O,M Train,M Train,N Train,N Train,O,A Train,A Train,O,M Train,M Train,N Train,N Train,O,A Train
+3,O,M Vehicles,M Vehicles,N Vehicles,N Vehicles,O,A Vehicles,A Vehicles,O,M Vehicles,M Vehicles,N Vehicles,N Vehicles,O,A Vehicles,A Vehicles,O,M Vehicles,M Vehicles,N Vehicles,N Vehicles,O,A Vehicles,A Vehicles,O,M Vehicles,M Vehicles,N Vehicles,N Vehicles,O,A Vehicles
+4,O,M Cargo,M Cargo,N Cargo,N Cargo,O,A Cargo,A Cargo,O,M Cargo,M Cargo,N Cargo,N Cargo,O,A Cargo,A Cargo,O,M Cargo,M Cargo,N Cargo,N Cargo,O,A Cargo,A Cargo,O,M Cargo,M Cargo,N Cargo,N Cargo,O,A Cargo
+5,A Vehicles,A Vehicles,O,M Vehicles,M Vehicles,N Vehicles,N Vehicles,O,A Vehicles,A Vehicles,O,M Vehicles,M Vehicles,N Vehicles,N Vehicles,O,A Vehicles,A Vehicles,O,M Vehicles,M Vehicles,N Vehicles,N Vehicles,O,A Vehicles,A Vehicles,O,M Vehicles,M Vehicles,N Vehicles,N Vehicles
+6,A Cargo,A Cargo,O,M Cargo,M Cargo,N Cargo,N Cargo,O,A Cargo,A Cargo,O,M Cargo,M Cargo,N Cargo,N Cargo,O,A Cargo,A Cargo,O,M Cargo,M Cargo,N Cargo,N Cargo,O,A Cargo,A Cargo,O,M Cargo,M Cargo,N Cargo,N Cargo
+7,A Pax,A Pax,O,M Pax,M Pax,N Pax,N Pax,O,A Pax,A Pax,O,M Pax,M Pax,N Pax,N Pax,O,A Pax,A Pax,O,M Pax,M Pax,N Pax,N Pax,O,A Pax,A Pax,O,M Pax,M Pax,N Pax,N Pax
+8,A Train,A Train,O,M Train,M Train,N Train,N Train,O,A Train,A Train,O,M Train,M Train,N Train,N Train,O,A Train,A Train,O,M Train,M Train,N Train,N Train,O,A Train,A Train,O,M Train,M Train,N Train,N Train
+9,N Cargo,O,A Cargo,A Cargo,O,M Cargo,M Cargo,N Cargo,N Cargo,O,A Cargo,A Cargo,O,M Cargo,M Cargo,N Cargo,N Cargo,O,A Cargo,A Cargo,O,M Cargo,M Cargo,N Cargo,N Cargo,O,A Cargo,A Cargo,O,M Cargo,M Cargo
+10,N Pax,O,A Pax,A Pax,O,M Pax,M Pax,N Pax,N Pax,O,A Pax,A Pax,O,M Pax,M Pax,N Pax,N Pax,O,A Pax,A Pax,O,M Pax,M Pax,N Pax,N Pax,O,A Pax,A Pax,O,M Pax,M Pax
+11,N Vehicles,O,A Vehicles,A Vehicles,O,M Vehicles,M Vehicles,N Vehicles,N Vehicles,O,A Vehicles,A Vehicles,O,M Vehicles,M Vehicles,N Vehicles,N Vehicles,O,A Vehicles,A Vehicles,O,M Vehicles,M Vehicles,N Vehicles,N Vehicles,O,A Vehicles,A Vehicles,O,M Vehicles,M Vehicles
+12,N Train,O,A Train,A Train,O,M Train,M Train,N Train,N Train,O,A Train,A Train,O,M Train,M Train,N Train,N Train,O,A Train,A Train,O,M Train,M Train,N Train,N Train,O,A Train,A Train,O,M Train,M Train
+13,N Cargo,O,A Cargo,A Cargo,O,M Cargo,M Cargo,N Cargo,N Cargo,O,A Cargo,A Cargo,O,M Cargo,M Cargo,N Cargo,N Cargo,O,A Cargo,A Cargo,O,M Cargo,M Cargo,N Cargo,N Cargo,O,A Cargo,A Cargo,O,M Cargo,M Cargo
+14,M Cargo,N Cargo,N Cargo,O,A Cargo,A Cargo,O,M Cargo,M Cargo,N Cargo,N Cargo,O,A Cargo,A Cargo,O,M Cargo,M Cargo,N Cargo,N Cargo,O,A Cargo,A Cargo,O,M Cargo,M Cargo,N Cargo,N Cargo,O,A Cargo,A Cargo,O
+15,M Pax,N Pax,N Pax,O,A Pax,A Pax,O,M Pax,M Pax,N Pax,N Pax,O,A Pax,A Pax,O,M Pax,M Pax,N Pax,N Pax,O,A Pax,A Pax,O,M Pax,M Pax,N Pax,N Pax,O,A Pax,A Pax,O
+16,M Vehicles,N Vehicles,N Vehicles,O,A Vehicles,A Vehicles,O,M Vehicles,M Vehicles,N Vehicles,N Vehicles,O,A Vehicles,A Vehicles,O,M Vehicles,M Vehicles,N Vehicles,N Vehicles,O,A Vehicles,A Vehicles,O,M Vehicles,M Vehicles,N Vehicles,N Vehicles,O,A Vehicles,A Vehicles,O
+17,M Train,N Train,N Train,O,A Train,A Train,O,M Train,M Train,N Train,N Train,O,A Train,A Train,O,M Train,M Train,N Train,N Train,O,A Train,A Train,O,M Train,M Train,N Train,N Train,O,A Train,A Train,O
+18,M Cargo,N Cargo,N Cargo,O,A Cargo,A Cargo,O,M Cargo,M Cargo,N Cargo,N Cargo,O,A Cargo,A Cargo,O,M Cargo,M Cargo,N Cargo,N Cargo,O,A Cargo,A Cargo,O,M Cargo,M Cargo,N Cargo,N Cargo,O,A Cargo,A Cargo,O

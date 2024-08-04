@@ -131,29 +131,7 @@ def total_pro_time(N, K, p):
 
 
 def argsort(lst):
-    cp_lst = lst.copy()
-    result = []
-    for i in range(len(lst)):
-        if i == len(lst) - 1:
-            break
-        for j in range(i+1, len(lst)):
-            if lst[j] > lst[i]:
-                lst[i], lst[j] = lst[j], lst[i]  # swap value
-
-    for value in lst:
-        idx = cp_lst.index(value)
-        if idx in result:
-            appearance = []
-            for id in range(len(cp_lst)):
-                if cp_lst[id] == value:
-                    appearance.append(id)
-            if appearance.index(idx) != len(appearance) - 1:
-                idx = appearance[appearance.index(idx) + 1]
-                result.append(idx)
-        else:
-            result.append(idx)
-
-    return result
+    return sorted(range(len(lst)), key=lambda x: lst[x], reverse=True)
 
 
 def initialize_seq(F, Mk):

@@ -119,10 +119,10 @@ def plot_1e_vrp_sample(DC, customers, routes):
 
     # Add routes
     for route in routes:
-        G.add_edge('DC', f'Customer{route[0]}', color='black')
-        G.add_edge(f'Customer{route[-1]}', 'DC', color='black')
+        G.add_edge('DC', f'Customer{route[0]}', color='darkblue')
+        G.add_edge(f'Customer{route[-1]}', 'DC', color='darkblue')
         for i in range(len(route) - 1):
-            G.add_edge(f'Customer{route[i]}', f'Customer{route[i+1]}', color='black')
+            G.add_edge(f'Customer{route[i]}', f'Customer{route[i+1]}', color='darkblue')
 
     pos = nx.get_node_attributes(G, 'pos')
     node_colors = [G.nodes[node].get('color', 'blue') for node in G.nodes()]
@@ -159,6 +159,7 @@ if __name__ == "__main__":
 
     DC_position = (5, 7)
     customer_positions = [(2, 4), (5, 2), (6, 3), (5, 10), (4, 5), (6, 8), (10, 7), (7, 3), (9, 9)]
-    routes = [[0, 3, 5], [2, 1, 4], [8, 6, 7]]
+    # routes = [[5, 3, 0, 4, 1], [2, 7, 6, 8]]
+    # routes = [[3, 0, 4,], [2, 1, 4], [8, 6, 7]]
 
     plot_1e_vrp_sample(DC_position, customer_positions, routes)

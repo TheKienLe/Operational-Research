@@ -3,41 +3,59 @@ import io
 import json
 import random
 import argparse
+import pandas as pd
 import matplotlib.pyplot as plt
-from plotRoute import plot_route
-
-random.seed(0)
+from tqdm import tqdm
 
 
-def get_parser():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--input_path', type=str, default="./data/Input_Data.json", required=False,
-                        help="Enter the input Json file name")
-    parser.add_argument('--pop_size', type=int, default=50, required=False,
-                        help="Enter the population size")
-    parser.add_argument('--mute_prob', type=float, default=0.5, required=False,
-                        help="Mutation Probabilty")
-    parser.add_argument('--iterations', type=int, default=5000, required=False,
-                        help="Number of iterations to run")
+def load_instance(file_name):
+    instance = {}
+    sheet_names = pd.ExcelFile(file_name).sheet_names
+    for sheet_name in sheet_names:
+        if sheet_name == "parameters":
+            instance['max_vehicle_number'] = pd.read_excel(
+                file_name, sheet_name).iloc[0, 1]
+            instance['Number_of_customers'] = pd.read_excel(
+                file_name, sheet_name).iloc[1, 1]
+            instance['vehicle_capacity'] = pd.read_excel(
+                file_name, sheet_name).iloc[2, 1]
+        elif sheet_name == "customers":
+            customers = pd.read_excel(file_name, sheet_name)
+            for customer_id in range(len(customers["Cus No"])):
+                name = ""
+                if customer_id == 0:
+                    name = "depart"
+                else:
+                    name = f"customer_{customer_id}"
+                instance[name] = {
+                    "coordinates": {"x": customers['x'][customer_id], "y": customers['y'][customer_id]},
+                    "demand": customers["demand"][customer_id],
+                    "due_time": customers["due_time"][customer_id],
+                    "ready_time": customers["ready_time"][customer_id],
+                    "service_time": customers["service_time"][customer_id]}
 
-    return parser.parse_args()
+    coor_data = pd.read_excel(file_name, "customers")[["x", "y"]]
+    distance = []
+    x = coor_data["x"]
+    y = coor_data["y"]
+    for i in range(len(coor_data)):
+        row = []
+        for j in range(len(coor_data)):
+            if i == j:
+                row.append(0)
+            else:
+                row.append(((x[i] - x[j])**2 + (y[i] - y[j])**2)**0.5)
+        distance.append(row)
 
-
-def load_instance(json_file):
-    """
-    Inputs: path to json file
-    Outputs: json file object if it exists, or else returns NoneType
-    """
-    if os.path.exists(path=json_file):
-        with io.open(json_file, 'rt', newline='') as file_object:
-            return json.load(file_object)
-    return None
+    instance["distance_matrix"] = distance
+    return instance
 
 
 def initialize_population(n_customers, n_population):
     population = []
     while len(population) < n_population:
-        chromosome = random.sample([i for i in range(1, n_customers+1)], n_customers)
+        chromosome = random.sample(
+            [i for i in range(1, n_customers+1)], n_customers)
         if chromosome not in population:
             population.append(chromosome)
     return population
@@ -137,7 +155,8 @@ def mutate(chromosome, probability):
         index1, index2 = random.sample(range(len(chromosome)), 2)
         chromosome[index1], chromosome[index2] = chromosome[index2], chromosome[index1]
         index1, index2 = sorted(random.sample(range(len(chromosome)), 2))
-        mutated = chromosome[:index1] + list(reversed(chromosome[index1:index2+1]))
+        mutated = chromosome[:index1] + \
+            list(reversed(chromosome[index1:index2+1]))
         if index2 < len(chromosome) - 1:
             mutated += chromosome[index2+1:]
         return mutated
@@ -165,8 +184,9 @@ if __name__ == '__main__':
     # -> mutate chromosomes
     # -> replace
     # -> calculate cost
-    args = get_parser()
-    instance = load_instance(args.input_path)
+    # args = get_parser()
+    instance = load_instance("./data/instance.xlsx")
+    print(instance)
     n_customers = instance['Number_of_customers']
     demand = {}
     for i in range(1, n_customers+1):
@@ -175,18 +195,20 @@ if __name__ == '__main__':
     distance_matrix = instance['distance_matrix']
     cap_vehicle = instance['vehicle_capacity']
     depart = instance['depart']
-    n_population = args.pop_size
-    iteration = args.iterations
-    cur_iter = 1
-    mutate_prob = args.mute_prob
+    n_population = 50
+    iteration = 50 #Generation
+    mutate_prob = 0.5
 
     population = initialize_population(n_customers, n_population)
-    prev_score, chromosome = get_chromosome(population, evaluate, distance_matrix, demand, cap_vehicle)
+    prev_score, chromosome = get_chromosome(
+        population, evaluate, distance_matrix, demand, cap_vehicle)
 
     score_history = [prev_score]
 
-    while cur_iter <= iteration:
-        chromosomes = get_chromosome(population, evaluate, distance_matrix, demand, cap_vehicle, k=2)
+    # while cur_iter <= iteration:
+    for i in tqdm(range(1, iteration+1)):
+        chromosomes = get_chromosome(
+            population, evaluate, distance_matrix, demand, cap_vehicle, k=2)
         chromosome1 = chromosomes[0][1]
         chromosome2 = chromosomes[1][1]
         offspring1, offspring2 = ordered_crossover(chromosome1, chromosome2)
@@ -194,30 +216,25 @@ if __name__ == '__main__':
         offspring2 = mutate(offspring2, mutate_prob)
         score1 = evaluate(offspring1, distance_matrix, demand, cap_vehicle)
         score2 = evaluate(offspring2, distance_matrix, demand, cap_vehicle)
-        score, chromosome = get_chromosome(population, evaluate, distance_matrix, demand, cap_vehicle, reverse=True)
+        score, chromosome = get_chromosome(
+            population, evaluate, distance_matrix, demand, cap_vehicle, reverse=True)
 
         if score1 < score:
             replace(population, chromo_in=offspring1, chromo_out=chromosome)
 
-        score, chromosome = get_chromosome(population, evaluate, distance_matrix, demand, cap_vehicle, reverse=True)
+        score, chromosome = get_chromosome(
+            population, evaluate, distance_matrix, demand, cap_vehicle, reverse=True)
 
         if score2 < score:
             replace(population, chromo_in=offspring2, chromo_out=chromosome)
 
-        score, chromosome = get_chromosome(population, evaluate, distance_matrix, demand, cap_vehicle)
+        score, chromosome = get_chromosome(
+            population, evaluate, distance_matrix, demand, cap_vehicle)
         score_history.append(score)
         prev_score = score
-        cur_iter += 1
+        # cur_iter += 1
 
-    print(score, chromosome)
-    subroutes = evaluate(chromosome, distance_matrix, demand, cap_vehicle, return_subroute=True)
-    title = "SSGA with CVRP, mute_prob={}".format(mutate_prob)
-    plot_route(subroutes, instance, title)
-    plt.cla()
-    plt.plot(score_history)
-    plt.xlabel("Iterations")
-    plt.ylabel("Cost")
-    plt.title(title)
-    plt.savefig('figure/cost.png')
-    plt.show()
-
+    print("Total_distance:", score)  # 1 depart
+    subroutes = evaluate(chromosome, distance_matrix,
+                         demand, cap_vehicle, return_subroute=True)
+    print(subroutes)

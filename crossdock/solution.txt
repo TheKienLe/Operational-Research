@@ -1,0 +1,1 @@
+Solving with SCIP 8.1.0 [LP solver: Glop 9.9]Minimum distance 8277.0Picking distance 2304.0Shipping distance 5973.0

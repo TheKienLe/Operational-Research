@@ -314,7 +314,7 @@ def read_data(url):
 
     # quantity of type p at hospital i
     q = lst_to_dict(np.array(pd.read_excel("data.xlsx", "raw").iloc[:, [5, 6]], dtype=np.float32) )
-    print("Demand", q)
+    # print("Demand", q)
 
     # distance
     x = np.array(pd.read_excel("data.xlsx", "raw"))[:, 2]
@@ -334,7 +334,7 @@ def read_data(url):
         np.delete(
             np.array(pd.read_excel("data.xlsx", "capacity"), dtype=np.float32), 0, 1))
     Q = Q.squeeze()
-    print("capacity", Q)
+    # print("capacity", Q)
 
     instance = {}
     instance["num_hospital"] = n-1
@@ -351,7 +351,7 @@ if __name__ == "__main__":
 
     GA_params = {
         "pop_size": 100,
-        "gen_max": 10,
+        "gen_max": 1,
         "mutate_prob": 0,
         "cross_rate": 0.5,
         "tour_size": 8

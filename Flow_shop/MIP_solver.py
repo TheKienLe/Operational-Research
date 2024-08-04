@@ -33,15 +33,18 @@ class MIP_model():
         self.p = np.squeeze(
             np.array(pd.read_excel("data_1.xlsx", "p", index_col=0))
             )
+        print("p", self.p)
 
         # Set of stages accessed by job
         lambda_arr = np.array(pd.read_excel("data_1.xlsx", "lambda"))
         # self.lambda_dict = arr_to_dict(lambda_arr)
         self.lambda_dict = { job:list(self.S) for job in self.N }
+        print("lambda_dict", self.lambda_dict)
 
         # Set of parallel machine at stage k 
         E_arr = np.array(pd.read_excel("data_1.xlsx", "E"))
-        self.E_dict = { job:list(self.M) for job in self.N }
+        self.E_dict = { k:list(self.M) for k in self.S }
+        print("E_dict", self.E_dict)
         
         # Large number
         self.L = 1000000000
@@ -105,11 +108,11 @@ class MIP_model():
                     self.solver.Sum(
                         [self.X[(i, j, k)] for j in self.E_dict[k]]) == 1, 
                         "ct2")
-        
 
         # ct3: the next operation can only be started after the previous one is completed
         # Consider eliminate L
         # Add condition h > k
+        tol = int(self.n/2**1.3) if self.n >= 10 else 0
         for i in self.N:
             for h in self.lambda_dict[i]:
                 for k in self.lambda_dict[i]:
@@ -130,23 +133,25 @@ class MIP_model():
         
         # ct5: 
         # Change from -L to +L
+        diff = self.solver.NumVar(-self.solver.infinity(), self.solver.infinity(), "")
         for i in self.N:
             for l in self.N:
                 if i != l:
                     for k in intersect(self.lambda_dict[i], self.lambda_dict[l]):
                         for j in self.E_dict[k]:
                             for f in self.F:
-                                self.solver.Add(
-                                    self.s[(l,k)] - (self.s[(i,k)] + self.p[i, k]) \
-                                        + self.L*(5 - self.Z[(l,i,k)] - self.X[(i,j,k)] 
-                                                  - self.X[(l,j,k)] - self.Y[(i,f)] - self.Y[(l,f)]) >=0,
-                        "ct5")
+                                    self.solver.Add(
+                                        self.s[(l,k)] - (self.s[(i,k)] + self.p[i, k]) <= 
+                                        self.L * (5 - self.Z[(l,i,k)]
+                                         - self.X[(i,j,k)] - self.X[(l,j,k)] 
+                                         - self.Y[(i,f)] - self.Y[(l,f)]) , 
+                                        "ct5")
 
         # ct6:
         self.f = self.solver.NumVar(0, self.solver.infinity(), "")
         for i in self.N:
-            for k in self.lambda_dict[i]:
-                self.solver.Add(self.f >= self.s[(i, k)] + self.p[i, k])
+            for k in self.S:
+                self.solver.Add(self.f >= self.s[(i, k)] + self.p[i, k] +tol)
 
 
         # Objective
@@ -164,7 +169,7 @@ class MIP_model():
 
                 for i in self.N:
                     for k in self.lambda_dict[i]:
-                        file.write(f"s {i} {k} {self.s[(i, k)].solution_value() + self.p[i,k]}\n")
+                        file.write(f"s {i} {k} {self.s[(i, k)].solution_value()}\n")
 
                 for i in self.N:
                     for f in self.F:
@@ -187,6 +192,7 @@ class MIP_model():
             else:
                 print("No solution found.")
         print("Finished!!!")
+        print(f"Total makespan = {self.solver.Objective().Value()}\n")
 
 if __name__ == "__main__":
     start = time.time()

@@ -145,10 +145,10 @@ def vrp_model():
                     for i in N for j in N for k in K]))
     
     # Sets a time limit of 1 hour.
-    solver.SetTimeLimit(10*60*1000)
+    solver.SetTimeLimit(30*60*1000)
 
     # set a minimum gap limit for the integer solution during branch and cut
-    gap = 0.2
+    gap = 0.01
     solverParams = pywraplp.MPSolverParameters()
     solverParams.SetDoubleParam(solverParams.RELATIVE_MIP_GAP, gap)
 
