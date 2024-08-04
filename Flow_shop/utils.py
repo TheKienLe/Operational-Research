@@ -1,18 +1,20 @@
 from copy import deepcopy
 
-def arr_to_dict(arr):
-        dict = {}
-        for key, value in arr:
-            if key in dict:
-                dict[key].append(value)
-            else:
-                dict[key] = [value]
 
-        return dict
+def arr_to_dict(arr):
+    dict = {}
+    for key, value in arr:
+        if key in dict:
+            dict[key].append(value)
+        else:
+            dict[key] = [value]
+
+    return dict
 
 
 def intersect(list1, list2):
     return list(set(list1).intersection(set(list2)))
+
 
 def distance_dict(df):
     result = dict()
